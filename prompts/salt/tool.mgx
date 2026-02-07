@@ -1,0 +1,12 @@
+
+fn add(int a, int b) int {
+    return a + b
+}
+
+fn subtract(int a, int b) int {
+    return a - b
+}
+
+fn multiply(int a, int b) int {
+    return a * b
+}

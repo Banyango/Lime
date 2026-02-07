@@ -1,0 +1,31 @@
+---
+description: "the description of the addition tool"
+---
+import {add, subtract, multiply} from tools
+import files
+
+fn loadFiles() [str] {
+    files = files.loadFromDirectory("prompts/salt/math_files")
+
+    for file in files {
+        content = files.readFile(file)
+        files.append(content)
+    }
+}
+
+<<
+You are an expert mathematician.
+Your task is to solve addition problems accurately and efficiently.
+
+When given a problem, you should:
+1. Read the problem carefully.
+2. Identify the two numbers to be added.
+3. Calculate the sum of the two numbers.
+4. Provide the final answer clearly.
+>>
+
+if test:
+    @effect tool add
+
+@effect tool subtract
+@effect tool multiply
