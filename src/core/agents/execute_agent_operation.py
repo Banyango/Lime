@@ -10,19 +10,18 @@ from margarita.parser import (
     ForNode,
     IncludeNode,
     EffectNode,
+    StateNode,
 )
 
-from core.agents.agent import Agent
+from entities.context import Context
 from core.agents.agent_plugin import AgentPlugin
 
 
 class ExecuteAgentOperation:
-    def __init__(self, agent: Agent, plugins: list[AgentPlugin]):
+    def __init__(self, agent: Context, plugins: list[AgentPlugin]):
         self.base_path = None
         self.agent = agent
         self.plugins = plugins
-        for plugin in self.plugins:
-            plugin.set_agent(agent)
 
     async def execute_async(self, mgx_file: str, base_path: Path | None = None):
         """Execute an .mgx file with an agent
@@ -46,12 +45,12 @@ class ExecuteAgentOperation:
         """
         for node in nodes:
             if isinstance(node, TextNode):
-                self.agent.add_to_context(node.content)
+                self.agent.add_to_context_window(node.content)
 
             elif isinstance(node, VariableNode):
                 value = self.agent.get_variable_value(node.name)
                 if value is not None:
-                    self.agent.add_to_context(str(value))
+                    self.agent.add_to_context_window(str(value))
 
             elif isinstance(node, IfNode):
                 condition_value = self.agent.get_variable_value(node.condition)
@@ -67,6 +66,9 @@ class ExecuteAgentOperation:
                         self.agent.add_to_state(node.iterator, item)
                         await self._process_nodes_async(node.block)
                         self.agent.remove_from_state(node.iterator)
+
+            elif isinstance(node, StateNode):
+                self.agent.set_variable(node.variable_name, node.initial_value)
 
             elif isinstance(node, IncludeNode):
                 # IncludeNodes render and add to context

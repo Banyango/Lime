@@ -1,12 +1,12 @@
 from abc import ABC, abstractmethod
 
 
-class AgentService(ABC):
+class QueryService(ABC):
     @abstractmethod
-    async def execute_query(self, context: str, tools: dict) -> str:
+    async def execute_query(self, prompt: str, tools: dict) -> str:
         """
         Execute the agent with the given context.
         Args:
-            context (str): The context for the agent to execute.
+            prompt (str): The context for the agent to execute.
             tools (dict): A dictionary of tools available to the agent.
         """

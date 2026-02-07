@@ -22,7 +22,7 @@ class CliWriter(UI):
         self.in_reason_block = False
         self.in_response_block = False
 
-    def _set_heading(self, type: Literal["response","reasoning"]):
+    def _set_heading(self, type: Literal["response", "reasoning"]):
         if type == "response":
             if not self.in_response_block:
                 self.console.print()
@@ -37,7 +37,6 @@ class CliWriter(UI):
                 self.in_reason_block = True
                 self.in_response_block = False
 
-
     def on_text_added(self, text: str):
         self._set_heading("response")
         self.console.print(text, end="", overflow="fold", style="bold green")
@@ -49,13 +48,24 @@ class CliWriter(UI):
 
     def on_reasoning_added(self, text: str):
         self._set_heading("reasoning")
-        self.console.print(text, end="", overflow="fold", style="bold yellow")
+        self.console.print(text, end="", overflow="fold", style="italic yellow")
 
     def on_reasoning_terminated(self):
         self.console.print("")
 
+    def on_tool_requested(self, tool_name: str, tool_input: str):
+        self.console.print()
+        self.console.rule(f"[bold white]Tool Requested: {tool_name}")
+        self.console.print(tool_input, style="dim")
+        self.console.print()
 
-    def render_code(self, code: str, language: str = "python", filepath: str = None, theme: str = "monokai"):
+    def render_code(
+        self,
+        code: str,
+        language: str = "python",
+        filepath: str = None,
+        theme: str = "monokai",
+    ):
         """Render code block with syntax highlighting similar to Claude"""
         if filepath:
             # Display file path header
@@ -72,7 +82,7 @@ class CliWriter(UI):
             line_numbers=False,
             word_wrap=False,
             background_color="default",
-            padding=0
+            padding=0,
         )
         self.console.print(syntax)
         self.console.print()  # Add spacing
@@ -98,11 +108,7 @@ class CliWriter(UI):
 
     def render_header(self, text: str, level: int = 1):
         """Render a header with appropriate styling"""
-        styles = {
-            1: "bold cyan",
-            2: "bold blue",
-            3: "bold"
-        }
+        styles = {1: "bold cyan", 2: "bold blue", 3: "bold"}
         style = styles.get(level, "bold")
         self.console.print(f"\n{text}", style=style)
 

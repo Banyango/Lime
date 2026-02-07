@@ -13,5 +13,3 @@ def test_on_text_added_should_append_text_to_output():
 
     # Assert
     assert writer.output_text[0] == "Hello, "
-
-

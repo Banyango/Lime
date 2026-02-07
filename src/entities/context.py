@@ -1,21 +1,21 @@
 from typing import Any
 
-from core.interfaces.agent_service import AgentService
+from wireup import injectable
 
 
-class Agent:
-    def __init__(self, agent_service: AgentService):
+@injectable
+class Context:
+    def __init__(self):
         self.data = {}
-        self.context = ""
-        self.agent_service = agent_service
+        self.window = ""
 
-    def add_to_context(self, content: str):
+    def add_to_context_window(self, content: str):
         """Add content to the agent's context.
 
         Args:
             content (str): The content to add to the context.
         """
-        self.context += content
+        self.window += content
 
     def get_variable_value(self, name: str) -> Any:
         """Get a variable value from context, supporting dotted notation, range, and indexing.
@@ -80,6 +80,15 @@ class Agent:
 
         return value
 
+    def set_variable(self, name: str, value: Any):
+        """Set a variable in the agent's state.
+
+        Args:
+            name (str): The name of the variable to set.
+            value (Any): The value to set for the variable.
+        """
+        self.data[name] = value
+
     def add_to_state(self, iterator: str, item: Any):
         """Add an item to the agent's state.
 
@@ -96,7 +105,3 @@ class Agent:
             key (str): The key of the item to remove from the state.
         """
         self.data.pop(key, None)
-
-    async def run_current_context(self):
-        """Run the agent's current context."""
-        await self.agent_service.execute_query(context=self.context, tools={})

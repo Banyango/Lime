@@ -1,12 +1,7 @@
 from abc import ABC, abstractmethod
 
-from core.agents.agent import Agent
-
 
 class AgentPlugin(ABC):
-    def __init__(self):
-        self.agent = None
-
     @abstractmethod
     def is_match(self, token: str) -> bool:
         """
@@ -27,11 +22,3 @@ class AgentPlugin(ABC):
         Args:
             params (str): The parameters for the request.
         """
-
-    def set_agent(self, agent: Agent):
-        """Set the agent for the plugin.
-
-        Args:
-            agent (Agent): The agent to set for the plugin.
-        """
-        self.agent = agent
