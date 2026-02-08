@@ -1,0 +1,16 @@
+---
+description: "Create a unit test for a class"
+---
+<<
+Create a test for the class ${file_name}
+follow the format
+```
+def test_func_should_do_thing_when_condition():
+   # Arrange
+   # Act
+   # Assert
+```
+>>
+
+@effect run
+

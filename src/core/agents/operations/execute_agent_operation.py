@@ -1,3 +1,4 @@
+import re
 from pathlib import Path
 from typing import Any
 
@@ -11,18 +12,21 @@ from margarita.parser import (
     IncludeNode,
     EffectNode,
     StateNode,
+    ImportNode,
 )
 
+from core.agents.plugins.import_plugin import ImportPlugin
 from core.interfaces.ui import UI
 from entities.context import Context
 from core.interfaces.agent_plugin import AgentPlugin
 
 
 class ExecuteAgentOperation:
-    def __init__(self, agent: Context, plugins: list[AgentPlugin], ui: UI):
+    def __init__(self, context: Context, plugins: list[AgentPlugin], ui: UI):
         self.base_path = None
-        self.agent = agent
+        self.context = context
         self.plugins = plugins
+        self.global_dict = {}
         self.ui = ui
 
     async def execute_async(self, mgx_file: str, base_path: Path | None = None):
@@ -51,30 +55,34 @@ class ExecuteAgentOperation:
         """
         for node in nodes:
             if isinstance(node, TextNode):
-                self.agent.add_to_context_window(node.content)
+                final_content = self.replace_variables_in_text_node(node.content)
+                self.context.add_to_context_window(final_content)
 
             elif isinstance(node, VariableNode):
-                value = self.agent.get_variable_value(node.name)
+                value = self.context.get_variable_value(node.name)
                 if value is not None:
-                    self.agent.add_to_context_window(str(value))
+                    self.context.add_to_context_window(str(value))
 
             elif isinstance(node, IfNode):
-                condition_value = self.agent.get_variable_value(node.condition)
+                condition_value = self.context.get_variable_value(node.condition)
                 if self._is_truthy(condition_value):
                     await self._process_nodes_async(node.true_block)
                 elif node.false_block:
                     await self._process_nodes_async(node.true_block)
 
             elif isinstance(node, ForNode):
-                items = self.agent.get_variable_value(node.iterable)
+                items = self.context.get_variable_value(node.iterable)
                 if items:
                     for item in items:
-                        self.agent.add_to_state(node.iterator, item)
+                        self.context.add_to_state(node.iterator, item)
                         await self._process_nodes_async(node.block)
-                        self.agent.remove_from_state(node.iterator)
+                        self.context.remove_from_state(node.iterator)
 
             elif isinstance(node, StateNode):
-                self.agent.set_variable(node.variable_name, node.initial_value)
+                self.context.set_variable(node.variable_name, node.initial_value)
+
+            elif isinstance(node, ImportNode):
+                self.global_dict = ImportPlugin.execute_import(node.raw_import)
 
             elif isinstance(node, IncludeNode):
                 # IncludeNodes render and add to context
@@ -115,7 +123,7 @@ class ExecuteAgentOperation:
         """
         for effect_plugin in self.plugins:
             if effect_plugin.is_match(plugin):
-                await effect_plugin.handle(operation)
+                await effect_plugin.handle(params=operation, globals_dict=self.global_dict)
                 break
 
     @staticmethod
@@ -137,3 +145,31 @@ class ExecuteAgentOperation:
         if isinstance(value, (int, float)):
             return value != 0
         return True
+
+    def replace_variables_in_text_node(self, content: str) -> str:
+        pattern = r"\$\{([a-zA-Z_][\w\.]*)\}"
+
+        def resolve_variable(name: str):
+            parts = name.split(".")
+            value = self.context.get_variable_value(parts[0])
+            if value is None:
+                return None
+            for part in parts[1:]:
+                if isinstance(value, dict):
+                    value = value.get(part)
+                else:
+                    value = getattr(value, part, None)
+                if value is None:
+                    return None
+            return value
+
+        def repl(match: re.Match) -> str:
+            name = match.group(1)
+            val = resolve_variable(name)
+            return str(val) if val is not None else ""
+
+        return re.sub(pattern, repl, content)
+
+
+
+

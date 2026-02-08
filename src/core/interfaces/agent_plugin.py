@@ -4,8 +4,7 @@ from abc import ABC, abstractmethod
 class AgentPlugin(ABC):
     @abstractmethod
     def is_match(self, token: str) -> bool:
-        """
-        Determine if the plugin matches the given token.
+        """Determine if the plugin matches the given token.
 
         Args:
             token (str): The token to check.
@@ -15,10 +14,10 @@ class AgentPlugin(ABC):
         """
 
     @abstractmethod
-    async def handle(self, params: str):
-        """
-        Handle a request for the plugin.
+    async def handle(self, params: str, globals_dict: dict):
+        """Handle a request for the plugin.
 
         Args:
             params (str): The parameters for the request.
+            globals_dict (dict): The global variables available to the plugin.
         """

@@ -17,10 +17,11 @@ class RunAgentPlugin(AgentPlugin):
         """
         return token == "run"
 
-    async def handle(self, params: str):
+    async def handle(self, params: str, globals_dict: dict):
         """Handle a request for the plugin.
 
         Args:
             params (str): The parameters for the request.
+            globals_dict (dict): The global variables available to the plugin.
         """
         await self.agent_service.execute_query(prompt=self.context.window, tools={})

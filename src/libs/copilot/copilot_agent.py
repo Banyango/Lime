@@ -19,6 +19,12 @@ class CopilotQuery(QueryService):
         self.client = copilot_client
 
     async def execute_query(self, prompt: str, tools: dict) -> str:
+        """Execute a query using the Copilot client.
+
+        Args:
+            prompt (str): The prompt to send to the Copilot client.
+            tools (dict): A dictionary of tools available to the agent.
+        """
         if not self.client.con:
             raise Exception("Copilot client is not connected")
 

@@ -46,3 +46,11 @@ class UI(ABC):
         Args:
             metadata (dict): The metadata extracted from the .mgx file.
         """
+
+    @abstractmethod
+    def on_run_function(self, method_value):
+        """Handle the event when the agent requests to run a function.
+
+        Args:
+            method_value: The value of the method that the agent wants to run.
+        """

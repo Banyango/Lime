@@ -44,6 +44,9 @@ class CliWriter(UI):
     def on_agent_execution_start(self):
         self.console.rule(f"Starting execution of .mgx file", style="dim italic")
 
+    def on_run_function(self, method_value):
+        self.console.print(f"Running function: {method_value}", style="bold magenta")
+
     def on_parse_complete(self, metadata: dict):
         self.console.print("Parsing completed...", overflow="ignore", style="bold green")
         self.console.rule("Metadata", style="dim italic")

@@ -5,6 +5,7 @@ import click
 from app.container import container
 from app.lifecycle import with_lifecycle
 from core.agents.plugins.context import ContextPlugin
+from core.agents.plugins.func import FuncPlugin
 from core.interfaces.ui import UI
 from entities.context import Context
 from core.agents.operations.execute_agent_operation import ExecuteAgentOperation
@@ -25,7 +26,7 @@ async def execute(file_name: str) -> None:
     base_path = Path(file_name).parent
 
     ui = await container.get(UI)
-    agent = await container.get(Context)
+    context = await container.get(Context)
     query_service = await container.get(QueryService)
 
     with open(file_name, "r") as f:
@@ -33,10 +34,11 @@ async def execute(file_name: str) -> None:
 
         operation = ExecuteAgentOperation(
             ui=ui,
-            agent=agent,
+            context=context,
             plugins=[
-                RunAgentPlugin(agent_service=query_service, context=agent),
-                ContextPlugin(context=agent),
+                RunAgentPlugin(agent_service=query_service, context=context),
+                FuncPlugin(context=context, ui=ui),
+                ContextPlugin(context=context),
             ],
         )
 
