@@ -34,3 +34,15 @@ class UI(ABC):
             tool_name (str): The name of the tool that was requested.
             tool_input (str): The input for the tool that was requested.
         """
+
+    @abstractmethod
+    def on_agent_execution_start(self):
+        """Handle the event when agent execution starts."""
+
+    @abstractmethod
+    def on_parse_complete(self, metadata: dict):
+        """Handle the event when parsing of the .mgx file is complete.
+
+        Args:
+            metadata (dict): The metadata extracted from the .mgx file.
+        """

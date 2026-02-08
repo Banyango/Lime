@@ -105,3 +105,7 @@ class Context:
             key (str): The key of the item to remove from the state.
         """
         self.data.pop(key, None)
+
+    def clear(self):
+        """Clear the agent's context and state."""
+        self.window = ""

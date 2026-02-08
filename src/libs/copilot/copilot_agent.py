@@ -1,9 +1,9 @@
 from copilot import SessionConfig, MessageOptions
 from copilot.generated.session_events import SessionEventType
-from copilot.types import SystemMessageConfig, SystemMessageAppendConfig
+from copilot.types import SystemMessageAppendConfig
 from wireup import injectable
 
-from core.interfaces.agent_service import QueryService
+from core.interfaces.query_service import QueryService
 from core.interfaces.ui import UI
 from entities.context import Context
 from libs.copilot.client import GithubCopilotClient

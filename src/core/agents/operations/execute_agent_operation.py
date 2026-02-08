@@ -13,15 +13,17 @@ from margarita.parser import (
     StateNode,
 )
 
+from core.interfaces.ui import UI
 from entities.context import Context
-from core.agents.agent_plugin import AgentPlugin
+from core.interfaces.agent_plugin import AgentPlugin
 
 
 class ExecuteAgentOperation:
-    def __init__(self, agent: Context, plugins: list[AgentPlugin]):
+    def __init__(self, agent: Context, plugins: list[AgentPlugin], ui: UI):
         self.base_path = None
         self.agent = agent
         self.plugins = plugins
+        self.ui = ui
 
     async def execute_async(self, mgx_file: str, base_path: Path | None = None):
         """Execute an .mgx file with an agent
@@ -32,8 +34,12 @@ class ExecuteAgentOperation:
         """
         self.base_path = base_path
 
+        self.ui.on_agent_execution_start()
+
         parser = Parser()
         metadata, nodes = parser.parse(mgx_file)
+
+        self.ui.on_parse_complete(metadata)
 
         await self._process_nodes_async(nodes)
 
@@ -95,7 +101,7 @@ class ExecuteAgentOperation:
         """
         split = parameters.split(" ", 1)
 
-        plugin = split[0] if len(split) == 1 else None
+        plugin = split[0] if len(split) >= 1 else None
         operation = split[1] if len(split) > 1 else None
 
         await self.execute_plugin(plugin=plugin, operation=operation)

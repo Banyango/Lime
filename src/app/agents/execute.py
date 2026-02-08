@@ -4,10 +4,12 @@ import click
 
 from app.container import container
 from app.lifecycle import with_lifecycle
+from core.agents.plugins.context import ContextPlugin
+from core.interfaces.ui import UI
 from entities.context import Context
-from core.agents.execute_agent_operation import ExecuteAgentOperation
+from core.agents.operations.execute_agent_operation import ExecuteAgentOperation
 from core.agents.plugins.run_agent import RunAgentPlugin
-from core.interfaces.agent_service import QueryService
+from core.interfaces.query_service import QueryService
 
 
 @click.command()
@@ -20,16 +22,22 @@ async def execute(file_name: str) -> None:
     Args:
         file_name (str): The path to the .mgx file.
     """
+    base_path = Path(file_name).parent
+
+    ui = await container.get(UI)
     agent = await container.get(Context)
+    query_service = await container.get(QueryService)
 
     with open(file_name, "r") as f:
         mgx_code = f.read()
 
-        base_path = Path(file_name).parent
-        query_service = await container.get(QueryService)
         operation = ExecuteAgentOperation(
+            ui=ui,
             agent=agent,
-            plugins=[RunAgentPlugin(agent_service=query_service, context=agent)],
+            plugins=[
+                RunAgentPlugin(agent_service=query_service, context=agent),
+                ContextPlugin(context=agent),
+            ],
         )
 
         result = await operation.execute_async(mgx_file=mgx_code, base_path=base_path)

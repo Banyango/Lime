@@ -1,12 +1,10 @@
 from core.interfaces.agent_plugin import AgentPlugin
-from core.interfaces.query_service import QueryService
 from entities.context import Context
 
 
-class RunAgentPlugin(AgentPlugin):
-    def __init__(self, agent_service: QueryService, context: Context):
+class ContextPlugin(AgentPlugin):
+    def __init__(self, context: Context):
         super().__init__()
-        self.agent_service = agent_service
         self.context = context
 
     def is_match(self, token: str) -> bool:
@@ -15,7 +13,7 @@ class RunAgentPlugin(AgentPlugin):
         Args:
             token (str): The token to check.
         """
-        return token == "run"
+        return token == "context"
 
     async def handle(self, params: str):
         """Handle a request for the plugin.
@@ -23,4 +21,5 @@ class RunAgentPlugin(AgentPlugin):
         Args:
             params (str): The parameters for the request.
         """
-        await self.agent_service.execute_query(prompt=self.context.window, tools={})
+        if params.lower() == "clear":
+            self.context.clear()

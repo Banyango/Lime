@@ -16,4 +16,3 @@ def create_set_variable_tool(context: Context):
         return {"value": value}
 
     return set_variable
-

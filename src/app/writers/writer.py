@@ -14,7 +14,7 @@ from core.interfaces.ui import UI
 class CliWriter(UI):
     def __init__(self):
         # Console instance used by various render helpers and Live
-        self.console = Console(width=12)
+        self.console = Console(color_system="truecolor", force_terminal=True)
         self.current_index = 0
         self.output_text = [""]
         self.current_reasoning_index = 0
@@ -26,7 +26,7 @@ class CliWriter(UI):
         if type == "response":
             if not self.in_response_block:
                 self.console.print()
-                self.console.rule("[bold white]Response")
+                self.console.rule("[grey] Response")
                 self.in_response_block = True
                 self.in_reason_block = False
 
@@ -39,7 +39,17 @@ class CliWriter(UI):
 
     def on_text_added(self, text: str):
         self._set_heading("response")
-        self.console.print(text, end="", overflow="fold", style="bold green")
+        self.console.print(text, end="", overflow="fold", style="white")
+
+    def on_agent_execution_start(self):
+        self.console.rule(f"Starting execution of .mgx file", style="dim italic")
+
+    def on_parse_complete(self, metadata: dict):
+        self.console.print("Parsing completed...", overflow="ignore", style="bold green")
+        self.console.rule("Metadata", style="dim italic")
+        for key, value in metadata.items():
+            self.console.print(f"[bold]{key}:[/bold] {value}", overflow="ignore", style="bold blue")
+        self.console.rule()
 
     def on_text_terminated(self):
         self.console.print("")
