@@ -16,7 +16,7 @@ Features
 
 # Example
 
-```markdown:example.mg
+```
 // file:example.mgx
 ---
 description: Add metadata
