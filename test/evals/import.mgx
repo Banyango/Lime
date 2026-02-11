@@ -10,3 +10,11 @@ Tell me the value is ${result}
 >>
 
 @effect run
+@effect context clear
+
+@effect func add(10, result) => result2
+<<
+Tell me the value is ${result2}
+>>
+
+@effect run

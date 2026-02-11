@@ -6,11 +6,11 @@ from entities.context import Context
 
 class SetVariableFromState(BaseModel):
     name: str
-    value: str
+    value: str | list | dict | int | float | bool | None
 
 
 def create_set_variable_tool(context: Context):
-    @define_tool(name="SetVariable", description="Set a variable in the shared state")
+    @define_tool(name="SetVariable", description="Set a variable in the shared state, for putting it in a var")
     async def set_variable(params: SetVariableFromState) -> dict:
         value = context.set_variable(params.name, params.value)
         return {"value": value}

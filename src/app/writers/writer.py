@@ -1,8 +1,10 @@
 from typing import Literal
 
-from rich.console import Console
+from rich.console import Console, Group
+from rich.live import Live
 from rich.markdown import Markdown
 from rich.panel import Panel
+from rich.progress import Progress, SpinnerColumn, TextColumn
 from rich.syntax import Syntax
 from rich.text import Text
 from wireup import injectable
@@ -15,56 +17,111 @@ class CliWriter(UI):
     def __init__(self):
         # Console instance used by various render helpers and Live
         self.console = Console(color_system="truecolor", force_terminal=True)
-        self.current_index = 0
-        self.output_text = [""]
-        self.current_reasoning_index = 0
-        self.reasoning_text = [""]
+
+        # Accumulated text buffers
+        self.response_buffer = ""
+        self.reasoning_buffer = ""
+
+        # State tracking
         self.in_reason_block = False
         self.in_response_block = False
+        self.live_display = None
+        self.static_content = []  # Content that's been finalized
+        self.reasoning_progress = Progress(
+            SpinnerColumn(),
+            TextColumn(""),
+            console=self.console,
+            transient=True,
+        )
+
+
+    def _start_live_display(self):
+        """Start or ensure live display is running."""
+        if self.live_display is None:
+            self.live_display = Live(
+                console=self.console,
+                refresh_per_second=50,
+                auto_refresh=True,
+                transient=False
+            )
+            self.live_display.start()
+
+    def _stop_live_display(self):
+        """Stop the live display and finalize content."""
+        if self.live_display is not None:
+            self.live_display.stop()
+            self.live_display = None
+
+    def _render_accumulated_content(self):
+        """Render all accumulated content."""
+        renderables = []
+
+        # Add reasoning section if there's content
+        if self.reasoning_buffer:
+            buffer = self.reasoning_buffer.split("**")
+            dots = ""
+            dots = dots + "." * (len(self.reasoning_buffer) % 5)
+            renderables.append(Text(buffer[1]+dots if len(buffer) > 1 else "", style="italic yellow"))
+
+        # Add response section if there's content
+        if self.response_buffer:
+            renderables.append(Text("─" * self.console.width, style="grey"))
+            renderables.append(Text("Response", style="grey"))
+            renderables.append(Text("─" * self.console.width, style="grey"))
+            renderables.append(Markdown(self.response_buffer))
+
+        if renderables and self.live_display:
+            self.live_display.update(Group(*renderables))
 
     def _set_heading(self, type: Literal["response", "reasoning"]):
         if type == "response":
             if not self.in_response_block:
-                self.console.print()
-                self.console.rule("[grey] Response")
+                self._start_live_display()
                 self.in_response_block = True
                 self.in_reason_block = False
 
         elif type == "reasoning":
             if not self.in_reason_block:
-                self.console.print()
-                self.console.rule("[bold white]Reasoning")
+                self._start_live_display()
                 self.in_reason_block = True
                 self.in_response_block = False
 
     def on_text_added(self, text: str):
         self._set_heading("response")
-        self.console.print(text, end="", overflow="fold", style="white")
+        self.response_buffer += text
+        self._render_accumulated_content()
 
     def on_agent_execution_start(self):
         self.console.rule(f"Starting execution of .mgx file", style="dim italic")
 
     def on_run_function(self, method_value):
-        self.console.print(f"Running function: {method_value}", style="bold magenta")
+        self.console.print(f"Running function: {method_value}", end="", style="bold magenta")
 
     def on_parse_complete(self, metadata: dict):
-        self.console.print("Parsing completed...", overflow="ignore", style="bold green")
+        self.console.print("Parsing completed...", style="bold green")
         self.console.rule("Metadata", style="dim italic")
         for key, value in metadata.items():
-            self.console.print(f"[bold]{key}:[/bold] {value}", overflow="ignore", style="bold blue")
-        self.console.rule()
+            self.console.print(f"[bold]{key}:[/bold] {value}", style="bold blue")
+        self.console.rule(style="dim italic")
 
     def on_text_terminated(self):
-        self.console.print("")
+        self._stop_live_display()
         self.in_reason_block = False
         self.in_response_block = False
+        self.response_buffer = ""
+        self.response_buffer = ""
+        self.console.print("")  # Add spacing after completion
 
     def on_reasoning_added(self, text: str):
         self._set_heading("reasoning")
-        self.console.print(text, end="", overflow="fold", style="italic yellow")
+        self.reasoning_buffer += text
+        self._render_accumulated_content()
 
     def on_reasoning_terminated(self):
         self.console.print("")
+
+    def on_function_complete(self, result: str):
+        self.console.print(" (complete)", style="bold white")
 
     def on_tool_requested(self, tool_name: str, tool_input: str):
         self.console.print()

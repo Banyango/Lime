@@ -48,9 +48,16 @@ class UI(ABC):
         """
 
     @abstractmethod
-    def on_run_function(self, method_value):
+    def on_run_function(self, method_value: str):
         """Handle the event when the agent requests to run a function.
 
         Args:
             method_value: The value of the method that the agent wants to run.
+        """
+
+    def on_function_complete(self, result: str):
+        """Handle the event when the agent completes running a function.
+
+        Args:
+            result: The parameters that were used to run the function.
         """

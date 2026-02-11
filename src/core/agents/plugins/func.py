@@ -33,9 +33,22 @@ class FuncPlugin(AgentPlugin):
         method_value = result.groups()[0]
         result_value = result.groups()[1] if len(result.groups()) > 1 else None
 
+        match = re.search(r'([A-Za-z_][\w\.]*)\(\s*(.*?)\s*\)', method_value)
+        func_param_str = match.groups()[1] if match and len(match.groups()) > 1 else None
+        func_params = func_param_str.split(",") if func_param_str else []
+
+        all_params = dict()
+        for param in func_params:
+            key_stripped = param.replace(" ", "")
+            value = self.context.get_variable_value(key_stripped)
+            if value:
+                all_params[key_stripped] = value
+
         self.ui.on_run_function(params)
 
-        results = eval(method_value, globals_dict)
+        results = eval(method_value, globals_dict, all_params)
+
+        self.ui.on_function_complete(results)
 
         if result_value:
             self.context.set_variable(result_value, results)

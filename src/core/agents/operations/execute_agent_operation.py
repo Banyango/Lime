@@ -1,3 +1,4 @@
+import json
 import re
 from pathlib import Path
 from typing import Any
@@ -79,7 +80,8 @@ class ExecuteAgentOperation:
                         self.context.remove_from_state(node.iterator)
 
             elif isinstance(node, StateNode):
-                self.context.set_variable(node.variable_name, node.initial_value)
+                variable = json.loads(node.initial_value)
+                self.context.set_variable(node.variable_name, variable)
 
             elif isinstance(node, ImportNode):
                 self.global_dict = ImportPlugin.execute_import(node.raw_import)

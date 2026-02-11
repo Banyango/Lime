@@ -12,8 +12,9 @@ When given a problem, you should:
 4. Provide the final answer clearly.
 >>
 
-@state test = 5
-@state result = 0
+@state value = 0
+@state bald = 5
+@state yarr = 3
 
 <<
 Add 12 + test and store the result in the variable result
@@ -25,4 +26,4 @@ Add 12 + test and store the result in the variable result
 If you are a mathematician, echo 'I am a mathematician' to the console. Otherwise, Echo 'I am a banana' to the console.
 >>
 
-@effect run
+@effect tools 
