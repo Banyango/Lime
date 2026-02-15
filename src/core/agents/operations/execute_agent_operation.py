@@ -1,5 +1,6 @@
 import json
 import re
+from datetime import datetime
 from pathlib import Path
 from typing import Any
 
@@ -16,19 +17,22 @@ from margarita.parser import (
     ImportNode,
 )
 
+from core.agents.models import ExecutionModel
 from core.agents.plugins.import_plugin import ImportPlugin
-from core.interfaces.ui import UI
-from entities.context import Context
 from core.interfaces.agent_plugin import AgentPlugin
+from entities.run import RunStatus
 
 
 class ExecuteAgentOperation:
-    def __init__(self, context: Context, plugins: list[AgentPlugin], ui: UI):
+    def __init__(
+        self,
+        plugins: list[AgentPlugin],
+        execution_model: ExecutionModel,
+    ):
         self.base_path = None
-        self.context = context
         self.plugins = plugins
         self.global_dict = {}
-        self.ui = ui
+        self.execution_model = execution_model
 
     async def execute_async(self, mgx_file: str, base_path: Path | None = None):
         """Execute an .mgx file with an agent
@@ -39,12 +43,12 @@ class ExecuteAgentOperation:
         """
         self.base_path = base_path
 
-        self.ui.on_agent_execution_start()
-
         parser = Parser()
         metadata, nodes = parser.parse(mgx_file)
 
-        self.ui.on_parse_complete(metadata)
+        self.execution_model.metadata = metadata
+
+        self.execution_model.start_turn()
 
         await self._process_nodes_async(nodes)
 
@@ -57,34 +61,34 @@ class ExecuteAgentOperation:
         for node in nodes:
             if isinstance(node, TextNode):
                 final_content = self.replace_variables_in_text_node(node.content)
-                self.context.add_to_context_window(final_content)
+                self.execution_model.context.add_to_context_window(final_content)
 
             elif isinstance(node, VariableNode):
-                value = self.context.get_variable_value(node.name)
+                value = self.execution_model.context.get_variable_value(node.name)
                 if value is not None:
-                    self.context.add_to_context_window(str(value))
+                    self.execution_model.context.add_to_context_window(str(value))
 
             elif isinstance(node, IfNode):
-                condition_value = self.context.get_variable_value(node.condition)
+                condition_value = self.execution_model.context.get_variable_value(node.condition)
                 if self._is_truthy(condition_value):
                     await self._process_nodes_async(node.true_block)
                 elif node.false_block:
                     await self._process_nodes_async(node.true_block)
 
             elif isinstance(node, ForNode):
-                items = self.context.get_variable_value(node.iterable)
+                items = self.execution_model.context.get_variable_value(node.iterable)
                 if items:
                     for item in items:
-                        self.context.add_to_state(node.iterator, item)
+                        self.execution_model.context.add_to_state(node.iterator, item)
                         await self._process_nodes_async(node.block)
-                        self.context.remove_from_state(node.iterator)
+                        self.execution_model.context.remove_from_state(node.iterator)
 
             elif isinstance(node, StateNode):
                 variable = json.loads(node.initial_value)
-                self.context.set_variable(node.variable_name, variable)
+                self.execution_model.context.set_variable(node.variable_name, variable)
 
             elif isinstance(node, ImportNode):
-                self.global_dict = ImportPlugin.execute_import(node.raw_import)
+                self.global_dict = ImportPlugin.execute_import(node.raw_import, self.execution_model)
 
             elif isinstance(node, IncludeNode):
                 # IncludeNodes render and add to context
@@ -125,7 +129,11 @@ class ExecuteAgentOperation:
         """
         for effect_plugin in self.plugins:
             if effect_plugin.is_match(plugin):
-                await effect_plugin.handle(params=operation, globals_dict=self.global_dict)
+                await effect_plugin.handle(
+                    params=operation,
+                    globals_dict=self.global_dict,
+                    execution_model=self.execution_model,
+                )
                 break
 
     @staticmethod
@@ -153,7 +161,7 @@ class ExecuteAgentOperation:
 
         def resolve_variable(name: str):
             parts = name.split(".")
-            value = self.context.get_variable_value(parts[0])
+            value = self.execution_model.context.get_variable_value(parts[0])
             if value is None:
                 return None
             for part in parts[1:]:
@@ -171,7 +179,3 @@ class ExecuteAgentOperation:
             return str(val) if val is not None else ""
 
         return re.sub(pattern, repl, content)
-
-
-
-

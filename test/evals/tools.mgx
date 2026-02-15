@@ -1,0 +1,20 @@
+---
+description: "Tools for MGX evaluation"
+---
+
+<<
+Test tools
+>>
+from thing import add
+
+@state num = 1
+@state num2 = 2
+
+@effect tools add(num: int, num2: int) => str
+
+<<
+Use the add tool to add ${num} and ${num2} and store the result in str
+The sum of ${num} and ${num2} is ${str}
+>>
+
+@effect run

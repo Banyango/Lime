@@ -1,5 +1,8 @@
 from abc import ABC, abstractmethod
 
+from core.agents.models import ExecutionModel
+from entities.run import Run
+
 
 class AgentPlugin(ABC):
     @abstractmethod
@@ -14,10 +17,13 @@ class AgentPlugin(ABC):
         """
 
     @abstractmethod
-    async def handle(self, params: str, globals_dict: dict):
+    async def handle(
+        self, params: str, globals_dict: dict, execution_model: ExecutionModel
+    ):
         """Handle a request for the plugin.
 
         Args:
             params (str): The parameters for the request.
             globals_dict (dict): The global variables available to the plugin.
+            execution_model (ExecutionModel): The execution model for the current agent run.
         """

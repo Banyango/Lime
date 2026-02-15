@@ -9,6 +9,7 @@
 Features
 - Get all the benefits of [margarita](http://github.com/Banyango/margarita) files now with agentic capabilities.
 - Bring your favourite coding agent (Copilot for now) (roadmap for Claude code, codex and more soon)
+- React like composability through includes `[[ my-component is_admin=true ]]`
 - Store variables in state, and have the LLMs update/fetch state as needed.
 - Don't waste tokens on having LLMs run functions. Run it locally and then pass the results to the LLM.
 - Forget context explosion issues. Surgically control what context is sent to the LLM.

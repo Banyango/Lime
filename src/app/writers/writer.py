@@ -1,187 +1,218 @@
-from typing import Literal
+import asyncio
+import re
+from typing import Any
 
 from rich.console import Console, Group
 from rich.live import Live
 from rich.markdown import Markdown
 from rich.panel import Panel
-from rich.progress import Progress, SpinnerColumn, TextColumn
+from rich.rule import Rule
 from rich.syntax import Syntax
 from rich.text import Text
+from rich.table import Table
 from wireup import injectable
 
+from core.agents.models import ExecutionModel
 from core.interfaces.ui import UI
+from entities.function import FunctionCall
+from entities.run import Run, RunStatus, ContentBlockType, ToolCall
 
 
 @injectable(as_type=UI)
 class CliWriter(UI):
-    def __init__(self):
-        # Console instance used by various render helpers and Live
-        self.console = Console(color_system="truecolor", force_terminal=True)
+    async def render_ui(self, execution_model: ExecutionModel):
+        console = Console()
 
-        # Accumulated text buffers
-        self.response_buffer = ""
-        self.reasoning_buffer = ""
+        with Live(console=console, auto_refresh=False, vertical_overflow="visible") as live:
+            while True:
+                live.update(self._build_display(execution_model))
+                live.refresh()
 
-        # State tracking
-        self.in_reason_block = False
-        self.in_response_block = False
-        self.live_display = None
-        self.static_content = []  # Content that's been finalized
-        self.reasoning_progress = Progress(
-            SpinnerColumn(),
-            TextColumn(""),
-            console=self.console,
-            transient=True,
-        )
+                all_done = execution_model.turns and all(
+                    r.run and r.run.status in (RunStatus.COMPLETED, RunStatus.ERROR)
+                    for r in execution_model.turns
+                )
+                if all_done:
+                    break
 
+                await asyncio.sleep(0.12)
 
-    def _start_live_display(self):
-        """Start or ensure live display is running."""
-        if self.live_display is None:
-            self.live_display = Live(
-                console=self.console,
-                refresh_per_second=50,
-                auto_refresh=True,
-                transient=False
+    LOGO = Text.from_ansi(
+        "\033[32m"
+        " _ _\n"
+        "| (_)_ __ ___   ___\n"
+        "| | | '_ ` _ \\ / _ \\\n"
+        "| | | | | | | |  __/\n"
+        "|_|_|_| |_| |_|\\___|\n"
+        "\033[0m"
+    )
+
+    def _build_display(self, model: ExecutionModel) -> Group:
+        renderables: list[Any] = [self.LOGO]
+
+        if model.import_errors:
+            renderables.append(Rule("Import Errors", style="red"))
+            for err in model.import_errors:
+                renderables.append(Text(str(err), style="red"))
+            renderables.append(Rule(style="red"))
+            renderables.append(Text())
+
+        if model.header:
+            renderables.append(Text(model.header, style="bold cyan"))
+            renderables.append(Text())
+
+        if model.metadata:
+            renderables.append(Rule("Metadata", style="dim cyan"))
+            for key, value in model.metadata.items():
+                renderables.append(Text(f"{key}: {value}", style="dim"))
+            renderables.append(Rule(style="dim cyan"))
+            renderables.append(Text())
+
+        renderables.append(Text("Executing...", style="dim green"))
+        renderables.append(Text())
+
+        for i, turn in enumerate(model.turns):
+            renderables.extend(self._render_function_calls(turn.function_calls))
+
+            if turn.run:
+                renderables.extend(self._render_run(turn.run, i + 1))
+
+        return Group(*renderables) if renderables else Group(Text("Waiting..."))
+
+    def _render_run(self, run: Run, index: int) -> list:
+        parts = []
+
+        # Run header
+        status_style = {
+            RunStatus.PENDING: "dim",
+            RunStatus.RUNNING: "bold yellow",
+            RunStatus.IDLE: "bold blue",
+            RunStatus.COMPLETED: "bold green",
+            RunStatus.ERROR: "bold red",
+        }.get(run.status if run else RunStatus.PENDING, "dim")
+
+        header = Text()
+        header.append(f"Run {index}", style="bold")
+        if run.model:
+            header.append(f"  {run.model}", style="dim")
+        header.append(f"  [{run.status.value}]", style=status_style)
+        if run.duration_ms is not None:
+            header.append(f"  {run.duration_ms / 1000:.1f}s", style="dim")
+        parts.append(header)
+
+        # Build tool call lookup by ID
+        tool_call_map = {tc.tool_call_id: tc for tc in run.tool_calls}
+
+        # Content blocks (interleaved chronologically)
+        for block in run.content_blocks:
+            if block.type == ContentBlockType.REASONING:
+                if not block.text:
+                    continue
+                condensed_reasoning = re.findall(r'\*\*(.+?)\*\*', block.text)
+                parts.append(
+                    Panel(
+                        Text("\n".join(condensed_reasoning) if condensed_reasoning else block.text, style="dim"),
+                        title="Reasoning",
+                        border_style="dim",
+                        expand=False,
+                    )
+                )
+            elif block.type == ContentBlockType.RESPONSE:
+                if not block.text:
+                    continue
+                try:
+                    parts.append(Markdown(block.text))
+                except Exception:
+                    parts.append(Text(block.text))
+            elif block.type == ContentBlockType.TOOL_CALL:
+                tc = tool_call_map.get(block.ref)
+                if tc:
+                    parts.append(self._render_tool_call(tc))
+
+        # Errors
+        for err in run.errors:
+            parts.append(
+                Panel(
+                    Text(err.message, style="red"),
+                    title=f"Error{f' ({err.error_type})' if err.error_type else ''}",
+                    border_style="red",
+                    expand=False,
+                )
             )
-            self.live_display.start()
 
-    def _stop_live_display(self):
-        """Stop the live display and finalize content."""
-        if self.live_display is not None:
-            self.live_display.stop()
-            self.live_display = None
+        # Usage summary (only when run is done)
+        if run.status == RunStatus.COMPLETED and run.tokens.total_tokens > 0:
+            usage = Table.grid(padding=(0, 2))
+            usage.add_row(
+                Text("Tokens:", style="dim"),
+                Text(f"{run.tokens.input_tokens:,} in", style="dim"),
+                Text(f"{run.tokens.output_tokens:,} out", style="dim"),
+            )
+            if run.total_cost > 0:
+                usage.add_row(
+                    Text("Cost:", style="dim"),
+                    Text(f"${run.total_cost:.4f}", style="dim"),
+                )
+            if run.request_count > 0:
+                usage.add_row(
+                    Text("Requests:", style="dim"),
+                    Text(str(run.request_count), style="dim"),
+                )
+            parts.append(usage)
 
-    def _render_accumulated_content(self):
-        """Render all accumulated content."""
-        renderables = []
+        # Code changes
+        if run.code_changes:
+            cc = run.code_changes
+            changes_text = Text()
+            changes_text.append(f"{len(cc.files_modified)} files", style="dim")
+            changes_text.append(f"  +{cc.lines_added}", style="green")
+            changes_text.append(f"  -{cc.lines_removed}", style="red")
+            parts.append(changes_text)
 
-        # Add reasoning section if there's content
-        if self.reasoning_buffer:
-            buffer = self.reasoning_buffer.split("**")
-            dots = ""
-            dots = dots + "." * (len(self.reasoning_buffer) % 5)
-            renderables.append(Text(buffer[1]+dots if len(buffer) > 1 else "", style="italic yellow"))
+        parts.append(Text())
+        return parts
 
-        # Add response section if there's content
-        if self.response_buffer:
-            renderables.append(Text("─" * self.console.width, style="grey"))
-            renderables.append(Text("Response", style="grey"))
-            renderables.append(Text("─" * self.console.width, style="grey"))
-            renderables.append(Markdown(self.response_buffer))
+    @staticmethod
+    def _render_tool_call(tc: ToolCall) -> Panel:
+        import json
 
-        if renderables and self.live_display:
-            self.live_display.update(Group(*renderables))
+        tool_text = Text()
+        if tc.success is None:
+            tool_text.append("~ ", style="yellow")
+        elif tc.success:
+            tool_text.append("+ ", style="green")
+        else:
+            tool_text.append("x ", style="red")
+        tool_text.append(tc.tool_name, style="bold")
+        if tc.duration_ms is not None:
+            tool_text.append(f"  {tc.duration_ms:.0f}ms", style="dim")
 
-    def _set_heading(self, type: Literal["response", "reasoning"]):
-        if type == "response":
-            if not self.in_response_block:
-                self._start_live_display()
-                self.in_response_block = True
-                self.in_reason_block = False
+        tool_parts = [tool_text]
 
-        elif type == "reasoning":
-            if not self.in_reason_block:
-                self._start_live_display()
-                self.in_reason_block = True
-                self.in_response_block = False
+        if tc.arguments:
+            try:
+                args_str = json.dumps(tc.arguments, indent=2)
+                tool_parts.append(Syntax(args_str, "json", theme="monokai", line_numbers=False))
+            except (TypeError, ValueError):
+                tool_parts.append(Text(str(tc.arguments), style="dim"))
 
-    def on_text_added(self, text: str):
-        self._set_heading("response")
-        self.response_buffer += text
-        self._render_accumulated_content()
+        if tc.result:
+            tool_parts.append(Text(tc.result, style="dim"))
 
-    def on_agent_execution_start(self):
-        self.console.rule(f"Starting execution of .mgx file", style="dim italic")
+        return Panel(Group(*tool_parts), border_style="dim", expand=False)
 
-    def on_run_function(self, method_value):
-        self.console.print(f"Running function: {method_value}", end="", style="bold magenta")
+    def _render_function_calls(self, function_calls: list[FunctionCall]) -> list:
+        return [
+            Panel(
+                Group(
+                    Text(fc.method, style="bold blue"),
+                    Syntax(fc.params, "python", theme="monokai", line_numbers=False),
+                    Text(fc.result[0:150], style="dim")
+                ),
+                title="Function Call",
+                border_style="blue",
+                expand=False,
+            )
+            for fc in function_calls
+        ]
 
-    def on_parse_complete(self, metadata: dict):
-        self.console.print("Parsing completed...", style="bold green")
-        self.console.rule("Metadata", style="dim italic")
-        for key, value in metadata.items():
-            self.console.print(f"[bold]{key}:[/bold] {value}", style="bold blue")
-        self.console.rule(style="dim italic")
-
-    def on_text_terminated(self):
-        self._stop_live_display()
-        self.in_reason_block = False
-        self.in_response_block = False
-        self.response_buffer = ""
-        self.response_buffer = ""
-        self.console.print("")  # Add spacing after completion
-
-    def on_reasoning_added(self, text: str):
-        self._set_heading("reasoning")
-        self.reasoning_buffer += text
-        self._render_accumulated_content()
-
-    def on_reasoning_terminated(self):
-        self.console.print("")
-
-    def on_function_complete(self, result: str):
-        self.console.print(" (complete)", style="bold white")
-
-    def on_tool_requested(self, tool_name: str, tool_input: str):
-        self.console.print()
-        self.console.rule(f"[bold white]Tool Requested: {tool_name}")
-        self.console.print(tool_input, style="dim")
-        self.console.print()
-
-    def render_code(
-        self,
-        code: str,
-        language: str = "python",
-        filepath: str = None,
-        theme: str = "monokai",
-    ):
-        """Render code block with syntax highlighting similar to Claude"""
-        if filepath:
-            # Display file path header
-            header = Text()
-            header.append("// ", style="dim")
-            header.append(f"filepath: {filepath}", style="dim italic")
-            self.console.print(header)
-
-        # Render syntax highlighted code
-        syntax = Syntax(
-            code,
-            language,
-            theme=theme,
-            line_numbers=False,
-            word_wrap=False,
-            background_color="default",
-            padding=0,
-        )
-        self.console.print(syntax)
-        self.console.print()  # Add spacing
-
-    def render_markdown(self, markdown_text: str):
-        """Render markdown text"""
-        md = Markdown(markdown_text)
-        self.console.print(md)
-
-    def render_panel(self, content: str, title: str = None, border_style: str = "blue"):
-        """Render content in a bordered panel"""
-        panel = Panel(content, title=title, border_style=border_style, padding=(1, 2))
-        self.console.print(panel)
-
-    def render_text(self, text: str, style: str = None):
-        """Render styled text"""
-        self.console.print(text, style=style)
-
-    def render_divider(self, char: str = "─"):
-        """Render a horizontal divider"""
-        width = self.console.width
-        self.console.print(char * width, style="dim")
-
-    def render_header(self, text: str, level: int = 1):
-        """Render a header with appropriate styling"""
-        styles = {1: "bold cyan", 2: "bold blue", 3: "bold"}
-        style = styles.get(level, "bold")
-        self.console.print(f"\n{text}", style=style)
-
-    def clear(self):
-        """Clear the console"""
-        self.console.clear()

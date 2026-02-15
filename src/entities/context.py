@@ -1,13 +1,12 @@
 from typing import Any
 
-from wireup import injectable
+from entities.tool import Tool
 
-
-@injectable
 class Context:
     def __init__(self):
         self.data = {}
         self.window = ""
+        self.tools: list[Tool] = []
 
     def add_to_context_window(self, content: str):
         """Add content to the agent's context.
@@ -106,6 +105,18 @@ class Context:
         """
         self.data.pop(key, None)
 
-    def clear(self):
-        """Clear the agent's context and state."""
+    def add_tool(self, tool: Tool):
+        """Add a tool to the agent's available tools.
+
+        Args:
+            tool (Tool): The tool to add to the agent's available tools.
+        """
+        self.tools.append(tool)
+
+    def clear_tools(self):
+        """Clear all tools from the agent's available tools."""
+        self.tools = []
+
+    def clear_context(self):
+        """Clear the agent's context."""
         self.window = ""

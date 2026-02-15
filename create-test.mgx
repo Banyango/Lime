@@ -2,7 +2,8 @@
 description: "Create a unit test for a class"
 ---
 <<
-Create a test for the class ${file_name}
+Create a test for the class src/core/agents/plugins/func.py
+put it in test/unit/core/plugin/test_func_plugin.py
 follow the format
 ```
 def test_func_should_do_thing_when_condition():
@@ -10,6 +11,8 @@ def test_func_should_do_thing_when_condition():
    # Act
    # Assert
 ```
+
+put the test in a dir that matches the where the test is.
 >>
 
 @effect run
