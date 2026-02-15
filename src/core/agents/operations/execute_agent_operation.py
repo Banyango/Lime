@@ -1,6 +1,5 @@
 import json
 import re
-from datetime import datetime
 from pathlib import Path
 from typing import Any
 
@@ -20,7 +19,6 @@ from margarita.parser import (
 from core.agents.models import ExecutionModel
 from core.agents.plugins.import_plugin import ImportPlugin
 from core.interfaces.agent_plugin import AgentPlugin
-from entities.run import RunStatus
 
 
 class ExecuteAgentOperation:

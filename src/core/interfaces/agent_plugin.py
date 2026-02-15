@@ -1,7 +1,6 @@
 from abc import ABC, abstractmethod
 
 from core.agents.models import ExecutionModel
-from entities.run import Run
 
 
 class AgentPlugin(ABC):

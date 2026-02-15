@@ -10,11 +10,9 @@ from core.agents.plugins.context import ContextPlugin
 from core.agents.plugins.func import FuncPlugin
 from core.agents.plugins.tools import ToolsPlugin
 from core.interfaces.ui import UI
-from entities.context import Context
 from core.agents.operations.execute_agent_operation import ExecuteAgentOperation
 from core.agents.plugins.run_agent import RunAgentPlugin
 from core.interfaces.query_service import QueryService
-from entities.run import Run
 
 
 @click.command()

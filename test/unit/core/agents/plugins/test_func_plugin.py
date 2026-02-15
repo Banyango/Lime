@@ -1,37 +1,21 @@
-import asyncio
+from datetime import datetime
 
+import pytest
+
+from core.agents.models import ExecutionModel
 from core.agents.plugins.func import FuncPlugin
+from entities.run import RunStatus
 
 
-class DummyContext:
-    def __init__(self):
-        self.vars = {}
-        self.set_calls = []
-
-    def get_variable_value(self, key):
-        return self.vars.get(key)
-
-    def set_variable(self, name, value):
-        self.set_calls.append((name, value))
-
-
-class DummyUI:
-    def __init__(self):
-        self.run_calls = []
-        self.complete_calls = []
-
-    def on_run_function(self, params):
-        self.run_calls.append(params)
-
-    def on_function_complete(self, result):
-        self.complete_calls.append(result)
+def _create_execution_model():
+    model = ExecutionModel()
+    model.start_turn()
+    return model
 
 
 def test_func_should_match_when_token_is_func():
     # Arrange
-    ctx = DummyContext()
-    ui = DummyUI()
-    plugin = FuncPlugin(ctx, ui)
+    plugin = FuncPlugin()
 
     # Act
     matched = plugin.is_match("func")
@@ -42,19 +26,61 @@ def test_func_should_match_when_token_is_func():
     assert not_matched is False
 
 
-def test_func_should_run_function_and_store_result_when_params_provided():
+@pytest.mark.asyncio
+async def test_func_should_run_function_and_store_result_when_params_provided():
     # Arrange
-    ctx = DummyContext()
-    ctx.vars = {"x": 2, "y": 3}
-    ui = DummyUI()
-    plugin = FuncPlugin(ctx, ui)
+    execution_model = _create_execution_model()
+    execution_model.context.set_variable("x", 2)
+    execution_model.context.set_variable("y", 3)
+    exec("def add(x, y):\n    return x + y", execution_model.globals_dict)
+    plugin = FuncPlugin()
     params = "add(x,y) => result"
-    globals_dict = {"add": lambda x, y: x + y}
 
     # Act
-    asyncio.run(plugin.handle(params, globals_dict))
+    await plugin.handle(params, execution_model=execution_model)
 
     # Assert
-    assert ui.run_calls == [params]
-    assert ui.complete_calls == [5]
-    assert ctx.set_calls == [("result", 5)]
+    assert execution_model.context.get_variable_value("result") == 5
+    assert len(execution_model.turns[-1].function_calls) == 1
+    assert execution_model.turns[-1].function_calls[0].result == 5
+
+
+@pytest.mark.asyncio
+async def test_handle_should_run_func_when_valid():
+    # Arrange
+    plugin = FuncPlugin()
+    assert plugin.is_match("func")
+
+    execution_model = ExecutionModel()
+    execution_model.start_turn()
+    execution_model.start_run(
+        prompt="p",
+        provider="prov",
+        status=RunStatus.PENDING,
+        start_time=datetime.now(),
+    )
+
+    # Set variables that will be used as function arguments
+    execution_model.context.set_variable("a", 2)
+    execution_model.context.set_variable("b", 3)
+
+    # Provide a function in the globals that will be invoked by the plugin
+    exec("def add(a, b):\n    return a + b", execution_model.globals_dict)
+
+    params = "add(a, b) => sum_result"
+
+    # Act
+    await plugin.handle(params, execution_model=execution_model)
+
+    # Assert
+    # One function call should be logged
+    assert len(execution_model.turns[-1].function_calls) == 1
+    call = execution_model.turns[-1].function_calls[0]
+
+    # The logged method should match the invoked expression and params should contain the resolved args
+    assert call.method == "add(a, b)"
+    assert call.params == '{"a": 2, "b": 3}'
+
+    # The call result should be set and the context should contain the result variable
+    assert call.result == 5
+    assert execution_model.context.get_variable_value("sum_result") == 5

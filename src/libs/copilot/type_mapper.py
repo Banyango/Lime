@@ -1,4 +1,3 @@
-
 _TYPE_MAP = {
     "str": "string",
     "string": "string",

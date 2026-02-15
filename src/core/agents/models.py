@@ -5,7 +5,7 @@ from typing import Any
 
 from entities.context import Context
 from entities.function import FunctionCall
-from entities.run import Run, RunStatus, ToolCall
+from entities.run import Run, RunStatus
 
 
 @dataclass

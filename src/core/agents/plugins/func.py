@@ -2,8 +2,6 @@ import re
 
 from core.agents.models import ExecutionModel
 from core.interfaces.agent_plugin import AgentPlugin
-from core.interfaces.ui import UI
-from entities.context import Context
 
 
 class FuncPlugin(AgentPlugin):

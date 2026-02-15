@@ -4,6 +4,11 @@ Thumbs.db
 .DS_Store
 # OS
 
+# AI
+.claude/
+.copilot/
+.github/copilot/
+
 *~
 *.swo
 *.swp
@@ -137,6 +142,7 @@ downloads/
 dist/
 develop-eggs/
 build/
+temp/
 output/
 .Python
 # Distribution / packaging

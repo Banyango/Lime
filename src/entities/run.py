@@ -3,8 +3,6 @@ from datetime import datetime
 from enum import Enum
 from typing import Any, Optional
 
-from entities.function import FunctionCall
-
 
 class ContentBlockType(Enum):
     REASONING = "reasoning"

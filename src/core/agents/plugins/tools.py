@@ -25,7 +25,10 @@ class ToolsPlugin(AgentPlugin):
             r"^\s*([A-Za-z_]\w*)\s*\(\s*(.*?)\s*\)\s*(?:=>\s*(.+))?\s*$"
         )
         match = pattern.match(params)
+
         if not match:
+            if params == "clear":
+                execution_model.context.tools = []
             return
 
         parameters = []

@@ -43,7 +43,7 @@ When given a problem, you should:
 [[ create-a-react-component.mg ]]
 
 // Execute a loop 
-for i in range(5):
+for i in items:
     // run Python functions and store results in state.
     @effect func add(12, test.data) => result
 
@@ -52,18 +52,15 @@ for i in range(5):
 Add 12 + test.data and store the result in the variable 'result'.
 >>
 
-// Add tools 
-@effect tool add
-@effect tool subtract
-@effect tool multiply
-@effect tool load_files
+// Add tools, note: AddToolParam extends BaseModel from pydantic
+@effect tools add(params: AddToolParams) => int
 
 // Run the agent using tools and the context you built up.
 @effect run
 
 // clear the context and tools after running to avoid context explosion in future runs.
 @effect context clear
-@effect tool clear
+@effect tools clear
 
 // use the state result variables with a new context.
 <<

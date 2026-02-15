@@ -27,6 +27,7 @@ def _create_default_settings_file(path: Path) -> AppConfig:
         json.dump(default_config.model_dump(), f, indent=4)
     return default_config
 
+
 @injectable
 def get_app_config() -> AppConfig:
     path = Path(str(_default_settings_path()))

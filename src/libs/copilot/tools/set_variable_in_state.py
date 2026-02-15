@@ -2,7 +2,6 @@ from copilot import define_tool
 from pydantic import BaseModel
 
 from core.agents.models import ExecutionModel
-from entities.context import Context
 
 
 class SetVariableFromState(BaseModel):

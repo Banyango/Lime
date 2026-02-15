@@ -1,6 +1,5 @@
 from core.agents.models import ExecutionModel
 from core.interfaces.agent_plugin import AgentPlugin
-from entities.context import Context
 
 
 class ContextPlugin(AgentPlugin):

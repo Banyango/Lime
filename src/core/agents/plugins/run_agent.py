@@ -1,8 +1,6 @@
 from core.agents.models import ExecutionModel
 from core.interfaces.agent_plugin import AgentPlugin
 from core.interfaces.query_service import QueryService
-from entities.context import Context
-from entities.run import RunStatus
 
 
 class RunAgentPlugin(AgentPlugin):

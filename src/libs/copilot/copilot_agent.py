@@ -1,11 +1,8 @@
-import inspect
 from datetime import datetime, timezone
 
 from copilot import SessionConfig, MessageOptions, define_tool
 from copilot.generated.session_events import SessionEventType
-from copilot.tools import _normalize_result
-from copilot.types import SystemMessageAppendConfig, Tool, ToolInvocation, ToolResult
-from pydantic import create_model
+from copilot.types import SystemMessageAppendConfig, Tool
 from wireup import injectable
 
 from core.agents.models import ExecutionModel
@@ -26,9 +23,7 @@ from libs.copilot.client import GithubCopilotClient
 from libs.copilot.tools.get_variable_from_state import create_get_variable_tool
 from libs.copilot.tools.set_variable_in_state import (
     create_set_variable_tool,
-    SetVariableFromState,
 )
-from libs.copilot.type_mapper import map_type
 
 SYSTEM_PROMPT = """You are an autonomous coding agent with explicit access to two tools for shared state: a get-variable tool and a set-variable tool. For every piece of state you need to read or update you must use these tools; do not assume, invent, or hardcode values from memory or ask the user for them.
 Rules:
@@ -84,13 +79,16 @@ class CopilotQuery(QueryService):
                     params_type = execution_model.globals_dict[params[0].type]
 
                     if not params_type:
-                        execution_model.current_run.errors.append("Invalid tool parameter type: (Did you forget to import this type?)" + params[0].type)
+                        execution_model.current_run.errors.append(
+                            "Invalid tool parameter type: (Did you forget to import this type?)"
+                            + params[0].type
+                        )
 
                     tool = define_tool(
                         name=name,
                         description=description or "",
                         params_type=params_type,
-                        handler=funct
+                        handler=funct,
                     )
 
                     extra_tools.append(tool)
