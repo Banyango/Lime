@@ -5,16 +5,19 @@ description: "Tools for MGX evaluation"
 <<
 Test tools
 >>
-from thing import add
+from thing import weather, WeatherParams
 
-@state num = 1
-@state num2 = 2
+@state num = "New York"
 
-@effect tools add(num: int, num2: int) => str
+@effect tools weather(params: WeatherParams) => str
 
 <<
-Use the add tool to add ${num} and ${num2} and store the result in str
-The sum of ${num} and ${num2} is ${str}
+You are a weather expert.
+
+When given a city name, you should provide the current weather conditions in that city.
+Use the 'weather' tool to get the information and return it as a string.
+
+Tell me the weather in the variable num
 >>
 
 @effect run

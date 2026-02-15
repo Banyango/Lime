@@ -14,12 +14,11 @@ class ToolsPlugin(AgentPlugin):
         """
         return token == "tools"
 
-    async def handle(self, params: str, globals_dict: dict, execution_model: ExecutionModel):
+    async def handle(self, params: str, execution_model: ExecutionModel):
         """Handle a request for the plugin.
 
         Args:
             params (str): The parameters for the request.
-            globals_dict (dict): The global variables available to the plugin.
             execution_model (ExecutionModel): The execution model for the current agent run.
         """
         pattern = re.compile(
@@ -35,7 +34,7 @@ class ToolsPlugin(AgentPlugin):
         func_params_str = match.group(2)
         result_var = match.group(3)
 
-        if func_name not in globals_dict:
+        if func_name not in execution_model.globals_dict:
             return
 
         if func_params_str:

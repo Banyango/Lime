@@ -1,5 +1,6 @@
 import pytest
 
+from core.agents.models import ExecutionModel
 from core.agents.plugins.tools import ToolsPlugin
 from entities.context import Context
 from entities.tool import Tool, Param
@@ -59,16 +60,18 @@ from entities.tool import Tool, Param
 @pytest.mark.asyncio
 async def test_handle_should_parse_correctly(params, result):
     # Arrange
-    context = Context()
-    tools_plugin = ToolsPlugin(context)
+    execution_model = ExecutionModel()
+    tools_plugin = ToolsPlugin()
 
     # Act
-    await tools_plugin.handle(params, {"my_func": lambda x: x})
+    await tools_plugin.handle(
+        params, {"my_func": lambda x: x}, execution_model=execution_model
+    )
 
     # Assert
-    assert context.tools[0].name == result.name
-    assert context.tools[0].params == result.params
-    assert context.tools[0].return_types == result.return_types
+    assert execution_model.context.tools[0].name == result.name
+    assert execution_model.context.tools[0].params == result.params
+    assert execution_model.context.tools[0].return_types == result.return_types
 
 
 # test invalid input
@@ -84,11 +87,13 @@ async def test_handle_should_parse_correctly(params, result):
 @pytest.mark.asyncio
 async def test_handle_should_not_add_tool_for_invalid_input(params):
     # Arrange
-    context = Context()
-    tools_plugin = ToolsPlugin(context)
+    execution_model = ExecutionModel()
+    tools_plugin = ToolsPlugin()
 
     # Act
-    await tools_plugin.handle(params, {"my_func": lambda x: x})
+    await tools_plugin.handle(
+        params, {"my_func": lambda x: x}, execution_model=execution_model
+    )
 
     # Assert
-    assert len(context.tools) == 0
+    assert len(execution_model.context.tools) == 0

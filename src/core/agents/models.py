@@ -21,6 +21,7 @@ class ExecutionModel:
         self.import_errors = []
         self.metadata: dict[str, Any] = {}
         self.turns: list[Turn] = []
+        self.globals_dict: dict[str, Any] = globals()
 
     def start(self):
         """Initialize the execution model for a new agent execution."""
@@ -33,6 +34,11 @@ class ExecutionModel:
         self.turns.append(turn)
 
         return turn
+
+    @property
+    def current_run(self) -> Run | None:
+        """Get the current run for the latest turn in the execution model. None if there are no turns or the latest turn has no run."""
+        return self.turns[-1].run if self.turns else None
 
     def start_run(
         self, prompt: str, provider: str, status: RunStatus, start_time: datetime
@@ -78,4 +84,3 @@ class ExecutionModel:
             error (str): The error message for the import error.
         """
         self.import_errors.append(error)
-

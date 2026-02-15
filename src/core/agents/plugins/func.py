@@ -15,12 +15,11 @@ class FuncPlugin(AgentPlugin):
         """
         return token == "func"
 
-    async def handle(self, params: str, globals_dict: dict, execution_model: ExecutionModel):
+    async def handle(self, params: str, execution_model: ExecutionModel):
         """Handle a request for the plugin.
 
         Args:
             params (str): The parameters for the request.
-            globals_dict (dict): The global variables available to the plugin.
             execution_model (ExecutionModel): The execution model for the current agent run.
         """
         params = params.strip()
@@ -43,12 +42,16 @@ class FuncPlugin(AgentPlugin):
             if value:
                 all_params[key_stripped] = value
 
-        call = execution_model.add_function_call_log(method=method_value, params=all_params)
+        call = execution_model.add_function_call_log(
+            method=method_value, params=all_params
+        )
 
         try:
-            results = eval(method_value, globals_dict, all_params)
+            results = eval(method_value, execution_model.globals_dict, all_params)
         except Exception as e:
-            execution_model.import_errors.append(f"Error calling function '{method_value}': {str(e)}")
+            execution_model.import_errors.append(
+                f"Error calling function '{method_value}': {str(e)}"
+            )
             return
 
         call.result = results

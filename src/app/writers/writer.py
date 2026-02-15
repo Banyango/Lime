@@ -23,7 +23,9 @@ class CliWriter(UI):
     async def render_ui(self, execution_model: ExecutionModel):
         console = Console()
 
-        with Live(console=console, auto_refresh=False, vertical_overflow="visible") as live:
+        with Live(
+            console=console, auto_refresh=False, vertical_overflow="visible"
+        ) as live:
             while True:
                 live.update(self._build_display(execution_model))
                 live.refresh()
@@ -108,10 +110,15 @@ class CliWriter(UI):
             if block.type == ContentBlockType.REASONING:
                 if not block.text:
                     continue
-                condensed_reasoning = re.findall(r'\*\*(.+?)\*\*', block.text)
+                condensed_reasoning = re.findall(r"\*\*(.+?)\*\*", block.text)
                 parts.append(
                     Panel(
-                        Text("\n".join(condensed_reasoning) if condensed_reasoning else block.text, style="dim"),
+                        Text(
+                            "\n".join(condensed_reasoning)
+                            if condensed_reasoning
+                            else block.text,
+                            style="dim",
+                        ),
                         title="Reasoning",
                         border_style="dim",
                         expand=False,
@@ -192,7 +199,9 @@ class CliWriter(UI):
         if tc.arguments:
             try:
                 args_str = json.dumps(tc.arguments, indent=2)
-                tool_parts.append(Syntax(args_str, "json", theme="monokai", line_numbers=False))
+                tool_parts.append(
+                    Syntax(args_str, "json", theme="monokai", line_numbers=False)
+                )
             except (TypeError, ValueError):
                 tool_parts.append(Text(str(tc.arguments), style="dim"))
 
@@ -207,7 +216,7 @@ class CliWriter(UI):
                 Group(
                     Text(fc.method, style="bold blue"),
                     Syntax(fc.params, "python", theme="monokai", line_numbers=False),
-                    Text(fc.result[0:150], style="dim")
+                    Text((fc.result or "")[0:150], style="dim"),
                 ),
                 title="Function Call",
                 border_style="blue",
@@ -215,4 +224,3 @@ class CliWriter(UI):
             )
             for fc in function_calls
         ]
-

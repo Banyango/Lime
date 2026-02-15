@@ -5,9 +5,7 @@ from core.agents.models import ExecutionModel
 
 class QueryService(ABC):
     @abstractmethod
-    async def execute_query(
-        self, execution_model: ExecutionModel
-    ) -> str:
+    async def execute_query(self, execution_model: ExecutionModel) -> str:
         """Execute the agent with the given context.
 
         Args:

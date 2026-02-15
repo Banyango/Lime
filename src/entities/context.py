@@ -2,6 +2,7 @@ from typing import Any
 
 from entities.tool import Tool
 
+
 class Context:
     def __init__(self):
         self.data = {}

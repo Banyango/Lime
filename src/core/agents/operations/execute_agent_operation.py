@@ -31,7 +31,6 @@ class ExecuteAgentOperation:
     ):
         self.base_path = None
         self.plugins = plugins
-        self.global_dict = {}
         self.execution_model = execution_model
 
     async def execute_async(self, mgx_file: str, base_path: Path | None = None):
@@ -69,7 +68,9 @@ class ExecuteAgentOperation:
                     self.execution_model.context.add_to_context_window(str(value))
 
             elif isinstance(node, IfNode):
-                condition_value = self.execution_model.context.get_variable_value(node.condition)
+                condition_value = self.execution_model.context.get_variable_value(
+                    node.condition
+                )
                 if self._is_truthy(condition_value):
                     await self._process_nodes_async(node.true_block)
                 elif node.false_block:
@@ -88,7 +89,7 @@ class ExecuteAgentOperation:
                 self.execution_model.context.set_variable(node.variable_name, variable)
 
             elif isinstance(node, ImportNode):
-                self.global_dict = ImportPlugin.execute_import(node.raw_import, self.execution_model)
+                ImportPlugin.execute_import(node.raw_import, self.execution_model)
 
             elif isinstance(node, IncludeNode):
                 # IncludeNodes render and add to context
@@ -131,7 +132,6 @@ class ExecuteAgentOperation:
             if effect_plugin.is_match(plugin):
                 await effect_plugin.handle(
                     params=operation,
-                    globals_dict=self.global_dict,
                     execution_model=self.execution_model,
                 )
                 break

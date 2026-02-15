@@ -18,18 +18,13 @@ class RunAgentPlugin(AgentPlugin):
         """
         return token == "run"
 
-    async def handle(
-        self, params: str, globals_dict: dict, execution_model: ExecutionModel
-    ):
+    async def handle(self, params: str, execution_model: ExecutionModel):
         """Handle a request for the plugin.
 
         Args:
             params (str): The parameters for the request.
-            globals_dict (dict): The global variables available to the plugin.
             execution_model (ExecutionModel): The execution model for the current agent run.
         """
-        await self.agent_service.execute_query(
-            execution_model=execution_model
-        )
+        await self.agent_service.execute_query(execution_model=execution_model)
 
         execution_model.start_turn()

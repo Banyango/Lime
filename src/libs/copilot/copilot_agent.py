@@ -1,12 +1,14 @@
+import inspect
 from datetime import datetime, timezone
 
-from copilot import SessionConfig, MessageOptions
+from copilot import SessionConfig, MessageOptions, define_tool
 from copilot.generated.session_events import SessionEventType
-from copilot.types import SystemMessageAppendConfig, Tool
+from copilot.tools import _normalize_result
+from copilot.types import SystemMessageAppendConfig, Tool, ToolInvocation, ToolResult
+from pydantic import create_model
 from wireup import injectable
 
 from core.agents.models import ExecutionModel
-from libs.copilot.tools import get_variable_from_state
 from core.interfaces.query_service import QueryService
 from entities.run import (
     RunStatus,
@@ -22,7 +24,11 @@ from entities.run import (
 )
 from libs.copilot.client import GithubCopilotClient
 from libs.copilot.tools.get_variable_from_state import create_get_variable_tool
-from libs.copilot.tools.set_variable_in_state import create_set_variable_tool
+from libs.copilot.tools.set_variable_in_state import (
+    create_set_variable_tool,
+    SetVariableFromState,
+)
+from libs.copilot.type_mapper import map_type
 
 SYSTEM_PROMPT = """You are an autonomous coding agent with explicit access to two tools for shared state: a get-variable tool and a set-variable tool. For every piece of state you need to read or update you must use these tools; do not assume, invent, or hardcode values from memory or ask the user for them.
 Rules:
@@ -52,9 +58,7 @@ class CopilotQuery(QueryService):
     def __init__(self, copilot_client: GithubCopilotClient):
         self.client = copilot_client
 
-    async def execute_query(
-        self, execution_model: ExecutionModel
-    ) -> str:
+    async def execute_query(self, execution_model: ExecutionModel) -> str:
         """Execute a query using the Copilot client.
 
         Args:
@@ -63,17 +67,46 @@ class CopilotQuery(QueryService):
         if not self.client.con:
             raise Exception("Copilot client is not connected")
 
+        # Convert any internal Tool descriptors into Copilot SDK Tool objects.
+        # We'll build a list of extra tools and pass them into the session.
+        extra_tools: list[Tool] = []
+        if execution_model.context.tools:
+            for tool in execution_model.context.tools:
+                name = tool.name
+                params = tool.params
+                description = tool.description
+
+                funct = execution_model.globals_dict[name]
+                if not funct:
+                    break
+
+                if params and len(params) == 1:
+                    params_type = execution_model.globals_dict[params[0].type]
+
+                    if not params_type:
+                        execution_model.current_run.errors.append("Invalid tool parameter type: (Did you forget to import this type?)" + params[0].type)
+
+                    tool = define_tool(
+                        name=name,
+                        description=description or "",
+                        params_type=params_type,
+                        handler=funct
+                    )
+
+                    extra_tools.append(tool)
+
         get_var_tool = await create_get_variable_tool(execution_model=execution_model)
         set_var_tool = await create_set_variable_tool(execution_model=execution_model)
 
+        # Build tool list for the session (set and get variable tools first)
+        session_tools = [set_var_tool, get_var_tool] + extra_tools
+
         session = await self.client.con.create_session(
             SessionConfig(
-                system_message=SystemMessageAppendConfig(
-                    content=SYSTEM_PROMPT
-                ),
+                system_message=SystemMessageAppendConfig(content=SYSTEM_PROMPT),
                 model="gpt-5-mini",
                 streaming=True,
-                tools=[set_var_tool, get_var_tool],
+                tools=session_tools,
             ),
         )
 
@@ -104,21 +137,31 @@ class CopilotQuery(QueryService):
                 if run.reasoning is None:
                     run.reasoning = [""]
                 run.reasoning[-1] += d.delta_content
-                if not run.content_blocks or run.content_blocks[-1].type != ContentBlockType.REASONING:
-                    run.content_blocks.append(ContentBlock(type=ContentBlockType.REASONING))
+                if (
+                    not run.content_blocks
+                    or run.content_blocks[-1].type != ContentBlockType.REASONING
+                ):
+                    run.content_blocks.append(
+                        ContentBlock(type=ContentBlockType.REASONING)
+                    )
                 run.content_blocks[-1].text += d.delta_content
 
             elif event.type == SessionEventType.ASSISTANT_MESSAGE_DELTA:
                 if run.responses is None:
                     run.responses = [""]
                 run.responses[-1] += d.delta_content
-                if not run.content_blocks or run.content_blocks[-1].type != ContentBlockType.RESPONSE:
-                    run.content_blocks.append(ContentBlock(type=ContentBlockType.RESPONSE))
+                if (
+                    not run.content_blocks
+                    or run.content_blocks[-1].type != ContentBlockType.RESPONSE
+                ):
+                    run.content_blocks.append(
+                        ContentBlock(type=ContentBlockType.RESPONSE)
+                    )
                 run.content_blocks[-1].text += d.delta_content
 
             elif (
-                    event.type == SessionEventType.ASSISTANT_TURN_END
-                    or event.type == SessionEventType.ASSISTANT_MESSAGE
+                event.type == SessionEventType.ASSISTANT_TURN_END
+                or event.type == SessionEventType.ASSISTANT_MESSAGE
             ):
                 # Start a new entry for the next turn
                 if run.responses is not None:
@@ -148,6 +191,8 @@ class CopilotQuery(QueryService):
                         mu.cost += d.cost
 
             elif event.type == SessionEventType.TOOL_EXECUTION_START:
+                if d.tool_name == "report_intent":
+                    return  # This is an internal tool used for logging the agent's intent, we can ignore it in the run log.
                 run.tool_calls.append(
                     ToolCall(
                         tool_name=d.tool_name,
@@ -155,10 +200,12 @@ class CopilotQuery(QueryService):
                         arguments=d.arguments,
                     )
                 )
-                run.content_blocks.append(ContentBlock(
-                    type=ContentBlockType.TOOL_CALL,
-                    ref=d.tool_call_id,
-                ))
+                run.content_blocks.append(
+                    ContentBlock(
+                        type=ContentBlockType.TOOL_CALL,
+                        ref=d.tool_call_id,
+                    )
+                )
 
             elif event.type == SessionEventType.TOOL_EXECUTION_COMPLETE:
                 for tc in reversed(run.tool_calls):

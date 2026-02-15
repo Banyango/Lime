@@ -12,7 +12,13 @@ def test_func_should_do_thing_when_condition():
     assert plugin.is_match("func")
 
     execution_model = ExecutionModel()
-    execution_model.start_run(prompt="p", provider="prov", status=RunStatus.PENDING, start_time=datetime.utcnow())
+    execution_model.start_turn()
+    execution_model.start_run(
+        prompt="p",
+        provider="prov",
+        status=RunStatus.PENDING,
+        start_time=datetime.utcnow(),
+    )
 
     # Set variables that will be used as function arguments
     execution_model.context.set_variable("a", 2)
@@ -29,8 +35,8 @@ def test_func_should_do_thing_when_condition():
 
     # Assert
     # One function call should be logged
-    assert len(execution_model.function_calls) == 1
-    call = execution_model.function_calls[0]
+    assert len(execution_model.turns[-1].function_calls) == 1
+    call = execution_model.turns[-1].function_calls[0]
 
     # The logged method should match the invoked expression and params should contain the resolved args
     assert call.method == "add(a, b)"

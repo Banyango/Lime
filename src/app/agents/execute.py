@@ -8,6 +8,7 @@ from app.lifecycle import with_lifecycle
 from core.agents.models import ExecutionModel
 from core.agents.plugins.context import ContextPlugin
 from core.agents.plugins.func import FuncPlugin
+from core.agents.plugins.tools import ToolsPlugin
 from core.interfaces.ui import UI
 from entities.context import Context
 from core.agents.operations.execute_agent_operation import ExecuteAgentOperation
@@ -44,6 +45,7 @@ async def execute(file_name: str) -> None:
             plugins=[
                 RunAgentPlugin(agent_service=query_service),
                 FuncPlugin(),
+                ToolsPlugin(),
                 ContextPlugin(),
             ],
             execution_model=model,
@@ -51,8 +53,6 @@ async def execute(file_name: str) -> None:
 
         asyncio.create_task(ui.render_ui(model))
 
-        await operation.execute_async(
-            mgx_file=mgx_code, base_path=base_path
-        )
+        await operation.execute_async(mgx_file=mgx_code, base_path=base_path)
 
         await asyncio.sleep(0.5)  # Allow time for UI to update with final results

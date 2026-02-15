@@ -61,6 +61,7 @@ class ModelUsage:
     cost: float = 0.0
     tokens: TokenUsage = field(default_factory=TokenUsage)
 
+
 @dataclass
 class ToolCall:
     tool_name: str
