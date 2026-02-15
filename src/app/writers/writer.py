@@ -12,6 +12,7 @@ from rich.text import Text
 from rich.table import Table
 from wireup import injectable
 
+from app.config import AppConfig
 from core.agents.models import ExecutionModel
 from core.interfaces.ui import UI
 from entities.function import FunctionCall
@@ -20,6 +21,9 @@ from entities.run import Run, RunStatus, ContentBlockType, ToolCall
 
 @injectable(as_type=UI)
 class CliWriter(UI):
+    def __init__(self, app_config: AppConfig):
+        self.app_config = app_config
+
     async def render_ui(self, execution_model: ExecutionModel):
         console = Console()
 
@@ -101,6 +105,10 @@ class CliWriter(UI):
         if run.duration_ms is not None:
             header.append(f"  {run.duration_ms / 1000:.1f}s", style="dim")
         parts.append(header)
+
+        if self.app_config.show_context:
+            parts.append(Text("Prompt:", style="bold blue"))
+            parts.append(Text(run.prompt, style="dim"))
 
         # Build tool call lookup by ID
         tool_call_map = {tc.tool_call_id: tc for tc in run.tool_calls}
