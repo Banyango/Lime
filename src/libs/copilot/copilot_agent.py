@@ -262,4 +262,6 @@ class CopilotQuery(QueryService):
 
         await session.destroy()
 
+        execution_model.current_run.result = response.data.content if response else None
+
         return response.data.content

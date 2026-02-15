@@ -138,3 +138,6 @@ class Run:
 
     # Extensible metadata (provider-specific data, telemetry, etc.)
     metadata: dict[str, Any] = field(default_factory=dict)
+
+    # Result of the run
+    result: Optional[str] = None

@@ -18,6 +18,15 @@ from core.interfaces.ui import UI
 from entities.function import FunctionCall
 from entities.run import Run, RunStatus, ContentBlockType, ToolCall
 
+LOGO = Text.from_ansi(
+    "\033[32m"
+    " _ _\n"
+    "| (_)_ __ ___   ___\n"
+    "| | | '_ ` _ \\ / _ \\\n"
+    "| | | | | | | |  __/\n"
+    "|_|_|_| |_| |_|\\___|\n"
+    "\033[0m"
+)
 
 @injectable(as_type=UI)
 class CliWriter(UI):
@@ -28,7 +37,7 @@ class CliWriter(UI):
         console = Console()
 
         with Live(
-            console=console, auto_refresh=False, vertical_overflow="visible"
+                console=console, auto_refresh=False
         ) as live:
             while True:
                 live.update(self._build_display(execution_model))
@@ -43,19 +52,8 @@ class CliWriter(UI):
 
                 await asyncio.sleep(0.12)
 
-    LOGO = Text.from_ansi(
-        "\033[32m"
-        " _ _\n"
-        "| (_)_ __ ___   ___\n"
-        "| | | '_ ` _ \\ / _ \\\n"
-        "| | | | | | | |  __/\n"
-        "|_|_|_| |_| |_|\\___|\n"
-        "\033[0m"
-    )
-
     def _build_display(self, model: ExecutionModel) -> Group:
-        renderables: list[Any] = [self.LOGO]
-
+        renderables: list[Any] = [LOGO]
         if model.import_errors:
             renderables.append(Rule("Import Errors", style="red"))
             for err in model.import_errors:
