@@ -14,8 +14,8 @@ nav:
       - Custom Tools: 'Custom Tools.md'
     - Plugins:
       - Plugins: 'Coming soon.md'
-repo_url: https://github.com/banyango/lime"
-repo_name: "banyango/lime"
+repo_url: https://github.com/banyango/Lime"
+repo_name: "banyango/Lime"
 theme:
   icon:
     logo: material/puzzle
