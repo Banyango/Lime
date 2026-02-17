@@ -2,18 +2,19 @@ site_name: Lime
 site_description: "Documentation for the Lime project"
 nav:
   - 📚 Documentation:
-    - Getting started: 'Getting started.md'
-    - Concepts:
-      - Running the Agent: 'Running the Agent.md'
-      - Context Management: 'Context Management.md'
-      - Including Margarita Files: 'Including Margarita Files.md'
-      - Loops: 'Loops.md'
-      - State: 'State.md'
-      - Conditionals: 'Conditionals.md'
-      - Function Calls: 'Function Calls.md'
-      - Custom Tools: 'Custom Tools.md'
-    - Plugins:
-      - Plugins: 'Coming soon.md'
+      - Lime: 'index.md'
+      - Getting started: 'Getting started.md'
+      - Concepts:
+        - Running the Agent: 'Running the Agent.md'
+        - Context Management: 'Context Management.md'
+        - Including Margarita Files: 'Including Margarita Files.md'
+        - Loops: 'Loops.md'
+        - State: 'State.md'
+        - Conditionals: 'Conditionals.md'
+        - Function Calls: 'Function Calls.md'
+        - Custom Tools: 'Custom Tools.md'
+      - Plugins:
+        - Plugins: 'Coming soon.md'
 repo_url: https://github.com/banyango/Lime
 repo_name: banyango/Lime
 theme:
