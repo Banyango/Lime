@@ -141,3 +141,6 @@ class Run:
 
     # Result of the run
     result: Optional[str] = None
+
+    # DEBUG
+    event_name: Optional[str] = None

@@ -2,7 +2,7 @@ from datetime import datetime, timezone
 
 from copilot import SessionConfig, MessageOptions, define_tool
 from copilot.generated.session_events import SessionEventType
-from copilot.types import SystemMessageAppendConfig, Tool
+from copilot.types import SystemMessageAppendConfig, Tool, InfiniteSessionConfig
 from wireup import injectable
 
 from core.agents.models import ExecutionModel
@@ -104,6 +104,9 @@ class CopilotQuery(QueryService):
                 system_message=SystemMessageAppendConfig(content=SYSTEM_PROMPT),
                 model="gpt-5-mini",
                 streaming=True,
+                infinite_sessions=InfiniteSessionConfig(
+                    enabled=True,
+                ),
                 tools=session_tools,
             ),
         )
@@ -117,6 +120,8 @@ class CopilotQuery(QueryService):
 
         def handle_event(event):
             d = event.data
+
+            execution_model.current_run.event_name = event.type.value
 
             if event.type == SessionEventType.SESSION_START:
                 run.session_id = d.session_id
@@ -166,7 +171,8 @@ class CopilotQuery(QueryService):
                     run.responses.append("")
                 if run.reasoning is not None:
                     run.reasoning.append("")
-
+            elif event.type == SessionEventType.SESSION_USAGE_INFO:
+                pass
             elif event.type == SessionEventType.ASSISTANT_USAGE:
                 run.request_count += 1
                 turn_tokens = TokenUsage(

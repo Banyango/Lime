@@ -16,7 +16,7 @@ from core.interfaces.query_service import QueryService
 
 
 @click.command()
-@click.option("--file-name", type=str, required=True)
+@click.argument("file_name", type=str)
 @with_lifecycle
 async def execute(file_name: str) -> None:
     """
@@ -49,8 +49,8 @@ async def execute(file_name: str) -> None:
             execution_model=model,
         )
 
-        asyncio.create_task(ui.render_ui(model))
+        ui_task = asyncio.create_task(ui.render_ui(model))
 
         await operation.execute_async(mgx_file=mgx_code, base_path=base_path)
 
-        await asyncio.sleep(0.5)  # Allow time for UI to update with final results
+        await ui_task

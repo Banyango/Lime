@@ -1,5 +1,5 @@
 <div style="text-align: center;">
-    <img src="margarita.svg" alt="Margarita logo" width="140" />
+    <img src="lime.svg" alt="Margarita logo" width="180" />
     <h1>Lime</h1>
     <p>A code agent with programmable markdown files</p>
 </div>
@@ -103,3 +103,6 @@ Windows (PowerShell):
 ```powershell
 iwr -useb https://raw.githubusercontent.com/Banyango/lime/main/install-windows.ps1 | iex
 ```
+
+
+Logo Designed by Freepik

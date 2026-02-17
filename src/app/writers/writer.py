@@ -1,9 +1,7 @@
-import asyncio
 import re
 from typing import Any
 
-from rich.console import Console, Group
-from rich.live import Live
+from rich.console import Group
 from rich.markdown import Markdown
 from rich.panel import Panel
 from rich.rule import Rule
@@ -11,6 +9,8 @@ from rich.syntax import Syntax
 from rich.text import Text
 from rich.table import Table
 from wireup import injectable
+
+from app.writers.textual_app import LimeApp
 
 from app.config import AppConfig
 from core.agents.models import ExecutionModel
@@ -34,23 +34,11 @@ class CliWriter(UI):
         self.app_config = app_config
 
     async def render_ui(self, execution_model: ExecutionModel):
-        console = Console()
-
-        with Live(
-                console=console, auto_refresh=False
-        ) as live:
-            while True:
-                live.update(self._build_display(execution_model))
-                live.refresh()
-
-                all_done = execution_model.turns and all(
-                    r.run and r.run.status in (RunStatus.COMPLETED, RunStatus.ERROR)
-                    for r in execution_model.turns
-                )
-                if all_done:
-                    break
-
-                await asyncio.sleep(0.12)
+        app = LimeApp(
+            build_display=lambda: self._build_display(execution_model),
+            execution_model=execution_model,
+        )
+        await app.run_async()
 
     def _build_display(self, model: ExecutionModel) -> Group:
         renderables: list[Any] = [LOGO]
@@ -85,24 +73,6 @@ class CliWriter(UI):
 
     def _render_run(self, run: Run, index: int) -> list:
         parts = []
-
-        # Run header
-        status_style = {
-            RunStatus.PENDING: "dim",
-            RunStatus.RUNNING: "bold yellow",
-            RunStatus.IDLE: "bold blue",
-            RunStatus.COMPLETED: "bold green",
-            RunStatus.ERROR: "bold red",
-        }.get(run.status if run else RunStatus.PENDING, "dim")
-
-        header = Text()
-        header.append(f"Run {index}", style="bold")
-        if run.model:
-            header.append(f"  {run.model}", style="dim")
-        header.append(f"  [{run.status.value}]", style=status_style)
-        if run.duration_ms is not None:
-            header.append(f"  {run.duration_ms / 1000:.1f}s", style="dim")
-        parts.append(header)
 
         if self.app_config.show_context:
             parts.append(Text("Prompt:", style="bold blue"))
@@ -183,6 +153,28 @@ class CliWriter(UI):
             parts.append(changes_text)
 
         parts.append(Text())
+
+
+        # Run header
+        status_style = {
+            RunStatus.PENDING: "dim",
+            RunStatus.RUNNING: "bold yellow",
+            RunStatus.IDLE: "bold blue",
+            RunStatus.COMPLETED: "bold green",
+            RunStatus.ERROR: "bold red",
+        }.get(run.status if run else RunStatus.PENDING, "dim")
+
+        header = Text()
+        header.append(f"Run {index}", style="bold")
+        if run.model:
+            header.append(f"  {run.model}", style="dim")
+        header.append(f"  [{run.status.value}]", style=status_style)
+        if run.duration_ms is not None:
+            header.append(f"  {run.duration_ms / 1000:.1f}s", style="dim")
+        if run.event_name:
+            header.append(f"  {run.event_name}", style="dim")
+        parts.append(header)
+
         return parts
 
     @staticmethod
