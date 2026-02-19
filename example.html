@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lime Example</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            background-color: #1e1e1e;
+            font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+            font-size: 14px;
+            line-height: 1.6;
+            color: #d4d4d4;
+        }
+        pre {
+            margin: 0;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+        .comment { color: #6a9955; }
+        .keyword { color: #c586c0; }
+        .type { color: #4ec9b0; }
+        .function { color: #dcdcaa; }
+        .variable { color: #9cdcfe; }
+        .number { color: #b5cea8; }
+        .string { color: #ce9178; }
+        .operator { color: #569cd6; }
+        .text { color: #d4d4d4; }
+    </style>
+</head>
+<body>
+<pre><code><span class="comment">// file:example.mgx</span>
+<span class="string">---
+description: Add metadata
+team: Can put anything in metadata
+---</span>
+
+<span class="comment">// Import python functions for use with @effect func</span>
+<span class="keyword">from</span> <span class="type">math</span> <span class="keyword">import</span> <span class="function">add</span>, <span class="function">subtract</span>, <span class="function">multiply</span>, <span class="function">load_files</span>
+
+<span class="comment">// Supports all markdown. Places this into the agent's context.</span>
+<span class="operator">&lt;&lt;</span>
+<span class="text">You are an expert mathematician.
+Your task is to solve addition problems accurately and efficiently.
+
+When given a problem, you should:
+1. Read the problem carefully.
+2. Identify the two numbers to be added.
+3. Calculate the sum of the two numbers.
+4. Provide the final answer clearly.</span>
+<span class="operator">&gt;&gt;</span>
+
+<span class="comment">// Include other margarita files into the context</span>
+<span class="operator">[[</span> <span class="string">create-a-react-component.mg</span> <span class="operator">]]</span>
+
+<span class="comment">// Execute a loop</span>
+<span class="keyword">for</span> <span class="variable">i</span> <span class="keyword">in</span> <span class="variable">items</span>:
+    <span class="comment">// run Python functions and store results in state.</span>
+    <span class="operator">@effect</span> <span class="keyword">func</span> <span class="function">add</span>(<span class="number">12</span>, <span class="variable">test</span>.<span class="variable">data</span>) <span class="operator">=&gt;</span> <span class="variable">result</span>
+
+<span class="comment">// The agent can access/ set state variables too!</span>
+<span class="operator">&lt;&lt;</span>
+<span class="text">Add 12 + test.data and store the result in the variable 'result'.</span>
+<span class="operator">&gt;&gt;</span>
+
+<span class="comment">// Add tools, note: AddToolParam extends BaseModel from pydantic</span>
+<span class="operator">@effect</span> <span class="keyword">tools</span> <span class="function">add</span>(<span class="variable">params</span>: <span class="type">AddToolParams</span>) <span class="operator">=&gt;</span> <span class="type">int</span>
+
+<span class="comment">// Run the agent using tools and the context you built up.</span>
+<span class="operator">@effect</span> <span class="keyword">run</span>
+
+<span class="comment">// clear the context and tools after running to avoid context explosion in future runs.</span>
+<span class="operator">@effect</span> <span class="keyword">context</span> <span class="function">clear</span>
+<span class="operator">@effect</span> <span class="keyword">tools</span> <span class="function">clear</span>
+
+<span class="comment">// use the state result variables with a new context.</span>
+<span class="operator">&lt;&lt;</span>
+<span class="text">Validate the following:
+- The addition tool correctly adds two numbers.
+- The subtraction tool correctly subtracts two numbers.
+- The multiplication tool correctly multiplies two numbers.
+- The load_files function correctly loads and reads files from the specified directory.</span>
+<span class="operator">&gt;&gt;</span>
+
+<span class="comment">// conditonal logic</span>
+<span class="keyword">if</span> <span class="variable">result</span>.<span class="variable">failed</span>:
+    <span class="operator">&lt;&lt;</span>
+    <span class="text">The test failed. Please review the implementation of the math tools and the
+    load_files function for any errors.</span>
+    <span class="operator">&gt;&gt;</span>
+    <span class="operator">@effect</span> <span class="keyword">run</span>
+<span class="keyword">else</span>:
+    <span class="comment">// We're done!</span>
+</code></pre>
+</body>
+</html>
+
