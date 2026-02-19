@@ -19,10 +19,27 @@ Features
 
 ```markdown
 // file:example.mgx
----
-$${\color{purple}description}$$: $${\color{green}Add metadata}$$
-team: Can put anything in metadata
----
+<svg width="400" height="120" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background -->
+  <rect width="400" height="120" fill="#f8f9fa" rx="8"/>
+  
+  <!-- Border -->
+  <rect x="2" y="2" width="396" height="116" fill="none" stroke="#dee2e6" stroke-width="2" rx="6"/>
+  
+  <!-- Header line -->
+  <line x1="20" y1="15" x2="380" y2="15" stroke="#6c757d" stroke-width="2" stroke-dasharray="5,5"/>
+  
+  <!-- Description section -->
+  <text x="20" y="45" font-family="monospace" font-size="14" fill="#495057" font-weight="bold">description:</text>
+  <text x="130" y="45" font-family="monospace" font-size="14" fill="#0d6efd">Add metadata</text>
+  
+  <!-- Team section -->
+  <text x="20" y="75" font-family="monospace" font-size="14" fill="#495057" font-weight="bold">team:</text>
+  <text x="130" y="75" font-family="monospace" font-size="14" fill="#198754">Can put anything in metadata</text>
+  
+  <!-- Footer line -->
+  <line x1="20" y1="95" x2="380" y2="95" stroke="#6c757d" stroke-width="2" stroke-dasharray="5,5"/>
+</svg>
 
 // Import python functions for use with @effect func
 from math import add, subtract, multiply, load_files
