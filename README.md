@@ -20,7 +20,7 @@ Features
 ```markdown
 // file:example.mgx
 ---
-description: Add metadata
+$${\color{purple}description}$$: $${\color{green}Add metadata}$$
 team: Can put anything in metadata
 ---
 
