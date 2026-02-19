@@ -24,6 +24,6 @@ def load_files(file_paths: list[str]) -> dict[str, str]:
     """
     file_contents = {}
     for path in file_paths:
-        with open(path, "r") as file:
+        with open(path) as file:
             file_contents[path] = file.read()
     return file_contents

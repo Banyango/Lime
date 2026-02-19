@@ -1,4 +1,6 @@
-.PHONY: help install test lint format type-check clean build docs
+.PHONY: help install test test-cov lint format format-check type-check check clean build docs docs-serve pre-commit-install pre-commit-run prompts-init prompts-lock prompts-check
+
+LIME_CMD = uv run python src/main.py
 
 help:  ## Show this help message
 	@echo 'Usage: make [target]'
@@ -57,3 +59,11 @@ docs:  ## Build documentation
 docs-serve:  ## Serve documentation locally
 	uv run mkdocs serve
 
+prompts-init: ## Initialize prompt integrity manifest
+	$(LIME_CMD) prompts init
+
+prompts-lock: ## Generate prompt lock file from manifest
+	$(LIME_CMD) prompts lock
+
+prompts-check: ## Verify tracked prompts against lock file
+	$(LIME_CMD) prompts check
