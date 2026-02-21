@@ -3,7 +3,7 @@ from contextlib import asynccontextmanager
 from functools import wraps
 
 from app.container import container
-from libs.container import startup, shutdown
+from libs.container import shutdown, startup
 
 
 @asynccontextmanager

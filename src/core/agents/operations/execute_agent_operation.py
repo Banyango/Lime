@@ -3,22 +3,25 @@ import re
 from pathlib import Path
 from typing import Any
 
+from loguru import logger
 from margarita.parser import (
-    Parser,
-    TextNode,
-    Node,
-    VariableNode,
-    IfNode,
-    ForNode,
-    IncludeNode,
     EffectNode,
-    StateNode,
+    ForNode,
+    IfNode,
     ImportNode,
+    IncludeNode,
+    Node,
+    Parser,
+    StateNode,
+    TextNode,
+    VariableNode,
 )
 
 from core.agents.models import ExecutionModel
 from core.agents.plugins.import_plugin import ImportPlugin
 from core.interfaces.agent_plugin import AgentPlugin
+from core.interfaces.prompt_integrity import PromptIntegrity
+from entities.prompt_integrity import TRACKED_PROMPT_EXTENSIONS, PromptUnverifiedPathError
 
 
 class ExecuteAgentOperation:
@@ -26,10 +29,14 @@ class ExecuteAgentOperation:
         self,
         plugins: list[AgentPlugin],
         execution_model: ExecutionModel,
+        prompt_integrity: PromptIntegrity | None = None,
+        allow_unverified: bool = False,
     ):
         self.base_path = None
         self.plugins = plugins
         self.execution_model = execution_model
+        self.prompt_integrity = prompt_integrity
+        self.allow_unverified = allow_unverified
 
     async def execute_async(self, mgx_file: str, base_path: Path | None = None):
         """Execute an .mgx file with an agent
@@ -38,7 +45,7 @@ class ExecuteAgentOperation:
             mgx_file: The content of the .mgx file to execute
             base_path: Optional base directory path for resolving include statements
         """
-        self.base_path = base_path
+        self.base_path = base_path or Path.cwd()
 
         parser = Parser()
         metadata, nodes = parser.parse(mgx_file)
@@ -66,13 +73,11 @@ class ExecuteAgentOperation:
                     self.execution_model.context.add_to_context_window(str(value))
 
             elif isinstance(node, IfNode):
-                condition_value = self.execution_model.context.get_variable_value(
-                    node.condition
-                )
+                condition_value = self.execution_model.context.get_variable_value(node.condition)
                 if self._is_truthy(condition_value):
                     await self._process_nodes_async(node.true_block)
                 elif node.false_block:
-                    await self._process_nodes_async(node.true_block)
+                    await self._process_nodes_async(node.false_block)
 
             elif isinstance(node, ForNode):
                 items = self.execution_model.context.get_variable_value(node.iterable)
@@ -91,17 +96,35 @@ class ExecuteAgentOperation:
 
             elif isinstance(node, IncludeNode):
                 # IncludeNodes render and add to context
-                file_path = node.template_name
+                file_path = self._normalize_include_path(node.template_name)
+                include_path = (self.base_path / file_path).resolve(strict=False)
+                if not include_path.exists():
+                    raise FileNotFoundError(f"Included prompt file was not found: '{include_path}'.")
 
-                if not file_path.endswith(".mg"):
-                    file_path += ".mg"
+                should_verify_file = True
+                if self.prompt_integrity:
+                    try:
+                        self.prompt_integrity.verify_trusted_path(include_path)
+                    except PromptUnverifiedPathError as error:
+                        if not self.allow_unverified:
+                            raise
 
-                include_path = self.base_path / file_path
-                if include_path.exists():
-                    content = include_path.read_text()
-                    parser = Parser()
-                    _, include_nodes = parser.parse(content)
-                    await self._process_nodes_async(include_nodes)
+                        should_verify_file = False
+                        logger.warning(
+                            "Allowing unverified include outside trusted prompt root: path='{}' reason='{}' "
+                            "(enabled by --allow-unverified)",
+                            include_path,
+                            error,
+                        )
+
+                content_bytes = include_path.read_bytes()
+                if self.prompt_integrity and should_verify_file:
+                    self.prompt_integrity.verify_bytes(path=include_path, content_bytes=content_bytes)
+
+                content = content_bytes.decode()
+                parser = Parser()
+                _, include_nodes = parser.parse(content)
+                await self._process_nodes_async(include_nodes)
 
             elif isinstance(node, EffectNode):
                 await self._execute_effect_async(node.raw_content)
@@ -177,3 +200,24 @@ class ExecuteAgentOperation:
             return str(val) if val is not None else ""
 
         return re.sub(pattern, repl, content)
+
+    def _normalize_include_path(self, template_name: str) -> str:
+        """Normalize the include path.
+
+        Args:
+            template_name: The name of the template to normalize.
+
+        Returns:
+            The normalized template name.
+        """
+        include_path = template_name.strip()
+        suffix = Path(include_path).suffix
+        if not suffix:
+            return f"{include_path}.mg"
+
+        if suffix not in TRACKED_PROMPT_EXTENSIONS:
+            raise ValueError(
+                f"Unsupported include extension '{suffix}' in '{template_name}'. Only .mg and .md are allowed."
+            )
+
+        return include_path

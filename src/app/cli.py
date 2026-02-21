@@ -1,6 +1,7 @@
 import click
 
 from app.agents.execute import execute
+from app.prompts.commands import prompts
 
 
 @click.group()
@@ -10,3 +11,4 @@ def cli():
 
 
 cli.add_command(execute)
+cli.add_command(prompts)

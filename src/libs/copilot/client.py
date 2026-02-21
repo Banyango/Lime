@@ -1,5 +1,5 @@
-from wireup import injectable
 from copilot import CopilotClient
+from wireup import injectable
 
 
 @injectable
