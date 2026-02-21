@@ -1,13 +1,13 @@
 from dataclasses import dataclass
 
-TRACKED_PROMPT_EXTENSIONS = frozenset({".mg", ".md"})
+TRACKED_PROMPT_EXTENSIONS = frozenset({".mg", ".mgx"})
 PROMPT_MANIFEST_FILE_NAME = "prompts.toml"
 PROMPT_LOCK_FILE_NAME = "prompts.lock.json"
 PROMPT_MANIFEST_VERSION = 1
 PROMPT_LOCK_VERSION = 1
 PROMPT_HASH_ALGORITHM = "sha256"
 DEFAULT_PROMPT_ROOT = "prompts"
-DEFAULT_PROMPT_INCLUDE_PATTERNS = ("**/*.mg", "**/*.md")
+DEFAULT_PROMPT_INCLUDE_PATTERNS = ("**/*.mg", "**/*.mgx")
 DEFAULT_PROMPT_EXCLUDE_PATTERNS = ()
 _DEFAULT_PROMPT_INCLUDE_SERIALIZED = ", ".join(f'"{pattern}"' for pattern in DEFAULT_PROMPT_INCLUDE_PATTERNS)
 _DEFAULT_PROMPT_EXCLUDE_SERIALIZED = ", ".join(f'"{pattern}"' for pattern in DEFAULT_PROMPT_EXCLUDE_PATTERNS)
