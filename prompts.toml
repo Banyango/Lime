@@ -1,4 +1,0 @@
-version = 1
-root = "prompts"
-include = ["**/*.mg", "**/*.md"]
-exclude = []

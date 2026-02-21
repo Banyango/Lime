@@ -13,6 +13,7 @@ nav:
         - Conditionals: 'Conditionals.md'
         - Function Calls: 'Function Calls.md'
         - Custom Tools: 'Custom Tools.md'
+        - Prompt Locking: 'Prompt Locking.md'
       - Plugins:
         - Plugins: 'Coming soon.md'
 repo_url: https://github.com/banyango/Lime
