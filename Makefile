@@ -70,3 +70,10 @@ prompts-lock: ## Generate prompt lock file from manifest
 
 prompts-check: ## Verify tracked prompts against lock file
 	$(LIME_CMD) prompts check
+
+build-bin:  ## Install lime executable to /usr/local/bin
+	@sudo cp $(PWD)/dist/test_lime /usr/local/bin/lime
+	@sudo chmod +x /usr/local/bin/lime
+
+remove-bin:  ## Remove lime executable from /usr/local/bin
+	@sudo rm -f /usr/local/bin/lime
