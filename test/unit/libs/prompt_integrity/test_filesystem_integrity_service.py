@@ -22,7 +22,7 @@ def _write_default_project(tmp_path):
     (prompts_dir / "setup.mg").write_text("<<hello>>")
     (prompts_dir / "setup.md").write_text("# hello")
     (prompts_dir / "ignored.txt").write_text("ignore")
-    (prompts_dir / "ignored.mgx").write_text("ignore")
+    (prompts_dir / "included.mgx").write_text("included")
     nested = prompts_dir / "salt"
     nested.mkdir(parents=True, exist_ok=True)
     (nested / "template.mg").write_text("<<nested>>")
@@ -43,7 +43,7 @@ def test_scan_and_lock_should_track_only_prompt_templates_when_manifest_is_defau
     lock = sut.scan_and_lock()
 
     # Assert
-    assert set(lock.files.keys()) == {"salt/template.mg", "setup.md", "setup.mg"}
+    assert set(lock.files.keys()) == {"salt/template.mg", "setup.mg", "included.mgx"}
 
 
 def test_scan_and_lock_should_write_stable_lock_content_when_called_twice_without_changes(tmp_path, monkeypatch):

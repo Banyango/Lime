@@ -1,7 +1,7 @@
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
-from typing import Any, Optional
+from typing import Any
 
 
 class ContentBlockType(Enum):
@@ -16,7 +16,7 @@ class ContentBlockType(Enum):
 class ContentBlock:
     type: ContentBlockType
     text: str = ""
-    ref: Optional[str] = None
+    ref: str | None = None
 
 
 class RunStatus(Enum):
@@ -65,10 +65,10 @@ class ToolCall:
     tool_name: str
     tool_call_id: str
     arguments: Any = None
-    result: Optional[str] = None
-    success: Optional[bool] = None
-    duration_ms: Optional[float] = None
-    parent_tool_call_id: Optional[str] = None
+    result: str | None = None
+    success: bool | None = None
+    duration_ms: float | None = None
+    parent_tool_call_id: str | None = None
 
 
 @dataclass
@@ -81,36 +81,36 @@ class CodeChanges:
 @dataclass
 class RunError:
     message: str
-    code: Optional[str] = None
-    stack: Optional[str] = None
-    error_type: Optional[str] = None
+    code: str | None = None
+    stack: str | None = None
+    error_type: str | None = None
 
 
 @dataclass
 class RunContext:
-    cwd: Optional[str] = None
-    git_root: Optional[str] = None
-    branch: Optional[str] = None
-    repository_owner: Optional[str] = None
-    repository_name: Optional[str] = None
+    cwd: str | None = None
+    git_root: str | None = None
+    branch: str | None = None
+    repository_owner: str | None = None
+    repository_name: str | None = None
 
 
 @dataclass
 class Run:
     # Identity
-    session_id: Optional[str] = None
-    turn_id: Optional[str] = None
+    session_id: str | None = None
+    turn_id: str | None = None
 
     # Lifecycle
     status: RunStatus = RunStatus.PENDING
-    start_time: Optional[datetime] = None
-    end_time: Optional[datetime] = None
-    duration_ms: Optional[float] = None
-    shutdown_reason: Optional[ShutdownReason] = None
+    start_time: datetime | None = None
+    end_time: datetime | None = None
+    duration_ms: float | None = None
+    shutdown_reason: ShutdownReason | None = None
 
     # Model
-    model: Optional[str] = None
-    provider: Optional[str] = None
+    model: str | None = None
+    provider: str | None = None
 
     # Usage (aggregated across all API calls in this run)
     tokens: TokenUsage = field(default_factory=TokenUsage)
@@ -119,16 +119,16 @@ class Run:
     model_usage: dict[str, ModelUsage] = field(default_factory=dict)
 
     # Content
-    prompt: Optional[str] = None
-    responses: Optional[list[str]] = None
-    reasoning: Optional[list[str]] = None
+    prompt: str | None = None
+    responses: list[str] | None = None
+    reasoning: list[str] | None = None
     content_blocks: list[ContentBlock] = field(default_factory=list)
 
     # Tool execution
     tool_calls: list[ToolCall] = field(default_factory=list)
 
     # Code impact
-    code_changes: Optional[CodeChanges] = None
+    code_changes: CodeChanges | None = None
 
     # Environment
     context: RunContext = field(default_factory=RunContext)
@@ -140,7 +140,7 @@ class Run:
     metadata: dict[str, Any] = field(default_factory=dict)
 
     # Result of the run
-    result: Optional[str] = None
+    result: str | None = None
 
     # DEBUG
-    event_name: Optional[str] = None
+    event_name: str | None = None

@@ -47,6 +47,9 @@ clean:  ## Clean up build artifacts and cache files
 build:  ## Build the package
 	uv build
 
+build-exec:
+	uv run pyinstaller --onefile src/main.py --name lime
+
 pre-commit-install:  ## Install pre-commit hooks
 	uv run pre-commit install
 

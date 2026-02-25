@@ -1,5 +1,5 @@
 from entities.context import Context
-from entities.tool import Tool, Param
+from entities.tool import Param, Tool
 
 
 def _create_context() -> Context:

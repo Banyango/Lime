@@ -95,7 +95,7 @@ def test_execute_should_fail_when_prompt_verification_is_enabled_and_manifest_is
     mgx_path = _write_mgx_file(tmp_path)
 
     # Act
-    result = runner.invoke(sut, ["--file-name", str(mgx_path), "--verify-prompts"])
+    result = runner.invoke(sut, [str(mgx_path), "--verify-prompts"])
 
     # Assert
     assert result.exit_code != 0
@@ -118,7 +118,7 @@ def test_execute_should_fail_when_manifest_exists_and_lock_file_is_missing_in_au
     mgx_path = _write_mgx_file(tmp_path)
 
     # Act
-    result = runner.invoke(sut, ["--file-name", str(mgx_path)])
+    result = runner.invoke(sut, [str(mgx_path)])
 
     # Assert
     assert result.exit_code != 0
@@ -137,7 +137,7 @@ def test_execute_should_skip_prompt_verification_when_manifest_is_missing_and_au
     mgx_path = _write_mgx_file(tmp_path)
 
     # Act
-    result = runner.invoke(sut, ["--file-name", str(mgx_path)])
+    result = runner.invoke(sut, [str(mgx_path)])
 
     # Assert
     assert result.exit_code == 0
@@ -157,7 +157,7 @@ def test_execute_should_skip_prompt_verification_when_no_verify_prompts_flag_is_
     mgx_path = _write_mgx_file(tmp_path)
 
     # Act
-    result = runner.invoke(sut, ["--file-name", str(mgx_path), "--no-verify-prompts"])
+    result = runner.invoke(sut, [str(mgx_path), "--no-verify-prompts"])
 
     # Assert
     assert result.exit_code == 0
@@ -179,7 +179,7 @@ def test_execute_should_fail_when_preflight_prompt_integrity_check_detects_globa
     mgx_path = _write_mgx_file(tmp_path)
 
     # Act
-    result = runner.invoke(sut, ["--file-name", str(mgx_path)])
+    result = runner.invoke(sut, [str(mgx_path)])
 
     # Assert
     assert result.exit_code != 0
@@ -209,7 +209,7 @@ def test_execute_should_fail_when_any_tracked_prompt_has_drift_even_when_not_inc
     mgx_path = _write_mgx_file(tmp_path)
 
     # Act
-    result = runner.invoke(sut, ["--file-name", str(mgx_path)])
+    result = runner.invoke(sut, [str(mgx_path)])
 
     # Assert
     assert result.exit_code != 0
@@ -237,7 +237,7 @@ def test_execute_should_pass_when_verify_prompts_is_explicitly_enabled_and_lock_
     mgx_path = _write_mgx_file(tmp_path)
 
     # Act
-    result = runner.invoke(sut, ["--file-name", str(mgx_path), "--verify-prompts"])
+    result = runner.invoke(sut, [str(mgx_path), "--verify-prompts"])
 
     # Assert
     assert result.exit_code == 0
@@ -256,7 +256,7 @@ def test_execute_should_pass_allow_unverified_to_operation_when_flag_is_set(tmp_
     mgx_path = _write_mgx_file(tmp_path)
 
     # Act
-    result = runner.invoke(sut, ["--file-name", str(mgx_path), "--allow-unverified"])
+    result = runner.invoke(sut, [str(mgx_path), "--allow-unverified"])
 
     # Assert
     assert result.exit_code == 0

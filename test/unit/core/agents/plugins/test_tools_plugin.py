@@ -2,7 +2,7 @@ import pytest
 
 from core.agents.models import ExecutionModel
 from core.agents.plugins.tools import ToolsPlugin
-from entities.tool import Tool, Param
+from entities.tool import Param, Tool
 
 
 @pytest.mark.parametrize(

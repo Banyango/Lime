@@ -1,7 +1,7 @@
-import os
 import json
-
+import os
 from pathlib import Path
+
 from pydantic import BaseModel
 from wireup import injectable
 

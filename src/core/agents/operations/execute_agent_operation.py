@@ -5,6 +5,7 @@ from typing import Any
 
 from loguru import logger
 from margarita.parser import (
+    BreakNode,
     EffectNode,
     ForNode,
     IfNode,
@@ -17,11 +18,13 @@ from margarita.parser import (
     VariableNode,
 )
 
-from core.agents.models import ExecutionModel
+from core.agents.models import BreakSignal, ExecutionModel
 from core.agents.plugins.import_plugin import ImportPlugin
 from core.interfaces.agent_plugin import AgentPlugin
 from core.interfaces.prompt_integrity import PromptIntegrity
 from entities.prompt_integrity import TRACKED_PROMPT_EXTENSIONS, PromptUnverifiedPathError
+
+EQUALITY_OR_LOGICAL_OPERATORS = ["==", "!=", ">", "<", ">=", "<=", " and ", " or ", " not ", " in ", " is "]
 
 
 class ExecuteAgentOperation:
@@ -73,19 +76,26 @@ class ExecuteAgentOperation:
                     self.execution_model.context.add_to_context_window(str(value))
 
             elif isinstance(node, IfNode):
-                condition_value = self.execution_model.context.get_variable_value(node.condition)
+                condition_value = self._evaluate_condition(node.condition)
                 if self._is_truthy(condition_value):
                     await self._process_nodes_async(node.true_block)
                 elif node.false_block:
                     await self._process_nodes_async(node.false_block)
+
+            elif isinstance(node, BreakNode):
+                raise BreakSignal()
 
             elif isinstance(node, ForNode):
                 items = self.execution_model.context.get_variable_value(node.iterable)
                 if items:
                     for item in items:
                         self.execution_model.context.add_to_state(node.iterator, item)
-                        await self._process_nodes_async(node.block)
-                        self.execution_model.context.remove_from_state(node.iterator)
+                        try:
+                            await self._process_nodes_async(node.block)
+                        except BreakSignal:
+                            break
+                        finally:
+                            self.execution_model.context.remove_from_state(node.iterator)
 
             elif isinstance(node, StateNode):
                 variable = json.loads(node.initial_value)
@@ -95,7 +105,6 @@ class ExecuteAgentOperation:
                 ImportPlugin.execute_import(node.raw_import, self.execution_model)
 
             elif isinstance(node, IncludeNode):
-                # IncludeNodes render and add to context
                 file_path = self._normalize_include_path(node.template_name)
                 include_path = (self.base_path / file_path).resolve(strict=False)
                 if not include_path.exists():
@@ -177,6 +186,30 @@ class ExecuteAgentOperation:
             return value != 0
         return True
 
+    def _evaluate_condition(self, condition: str) -> Any:
+        """Evaluate a condition, which can be a simple variable or a Python expression.
+
+        Args:
+            condition: The condition string to evaluate
+
+        Returns:
+            The evaluated value of the condition
+        """
+        does_condition_contain_equality_or_logical = any(op in condition for op in EQUALITY_OR_LOGICAL_OPERATORS)
+
+        if does_condition_contain_equality_or_logical:
+            try:
+                namespace = dict(self.execution_model.context.data)
+                result = eval(condition, {"__builtins__": {}}, namespace)
+                return result
+            except Exception:
+                # If evaluation fails, treat as a falsy value
+                return None
+
+        result = self.execution_model.context.get_variable_value(condition)
+
+        return result
+
     def replace_variables_in_text_node(self, content: str) -> str:
         pattern = r"\$\{([a-zA-Z_][\w\.]*)\}"
 
@@ -217,7 +250,7 @@ class ExecuteAgentOperation:
 
         if suffix not in TRACKED_PROMPT_EXTENSIONS:
             raise ValueError(
-                f"Unsupported include extension '{suffix}' in '{template_name}'. Only .mg and .md are allowed."
+                f"Unsupported include extension '{suffix}' in '{template_name}'. Only .mg or .mgx are allowed."
             )
 
         return include_path

@@ -20,9 +20,7 @@ from libs.copilot.type_mapper import map_type
         ("object", "object"),
     ],
 )
-def test_map_type_should_return_correct_json_type_when_string_provided(
-    input_type, expected
-):
+def test_map_type_should_return_correct_json_type_when_string_provided(input_type, expected):
     # Arrange / Act
     result = map_type(input_type)
 

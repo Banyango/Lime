@@ -1,23 +1,23 @@
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
-from copilot import SessionConfig, MessageOptions, define_tool
+from copilot import MessageOptions, SessionConfig, define_tool
 from copilot.generated.session_events import SessionEventType
-from copilot.types import SystemMessageAppendConfig, Tool, InfiniteSessionConfig
+from copilot.types import InfiniteSessionConfig, SystemMessageAppendConfig, Tool
 from wireup import injectable
 
 from core.agents.models import ExecutionModel
 from core.interfaces.query_service import QueryService
 from entities.run import (
+    CodeChanges,
+    ContentBlock,
+    ContentBlockType,
+    ModelUsage,
+    RunContext,
+    RunError,
     RunStatus,
     ShutdownReason,
     TokenUsage,
-    ModelUsage,
     ToolCall,
-    CodeChanges,
-    RunError,
-    RunContext,
-    ContentBlock,
-    ContentBlockType,
 )
 from libs.copilot.client import GithubCopilotClient
 from libs.copilot.tools.get_variable_from_state import create_get_variable_tool
@@ -25,12 +25,17 @@ from libs.copilot.tools.set_variable_in_state import (
     create_set_variable_tool,
 )
 
-SYSTEM_PROMPT = """You are an autonomous coding agent with explicit access to two tools for shared state: a get-variable tool and a set-variable tool. For every piece of state you need to read or update you must use these tools; do not assume, invent, or hardcode values from memory or ask the user for them.
+SYSTEM_PROMPT = """You are an autonomous coding agent with explicit access to two tools for shared state: \
+a get-variable tool and a set-variable tool. For every piece of state you need to read or update you must \
+use these tools; do not assume, invent, or hardcode values from memory or ask the user for them.
 Rules:
-- Always call the get-variable tool before using any variable. If the variable is missing or empty, do not fabricate it — either compute it from available data or create it via the set-variable tool.
+- Always call the get-variable tool before using any variable. If the variable is missing or empty, \
+do not fabricate it — either compute it from available data or create it via the set-variable tool.
 - Always call the set-variable tool to persist any information you want available to future steps.
-- After each tool call, read and respect the tool's result. If a tool call fails, handle the failure and record an error variable via set-variable if needed.
-- Use deterministic variable names and prefer primitive values (string/number/boolean). If you must store structured data, store it as JSON under a clear name.
+- After each tool call, read and respect the tool's result. If a tool call fails, handle the failure \
+and record an error variable via set-variable if needed.
+- Use deterministic variable names and prefer primitive values (string/number/boolean). \
+If you must store structured data, store it as JSON under a clear name.
 - Do not prompt the user for missing values; act autonomously using available tools.
 
 Tool call format (follow this pattern when requesting a tool):
@@ -38,7 +43,8 @@ Tool call format (follow this pattern when requesting a tool):
 - Write: CALL_TOOL: set_variable with arguments { "name": "<variable_name>", "value": <value> }
 
 Behavior after actions:
-- Summarize the action taken and any state changes (variable names and values) in the assistant message so the run log is clear.
+- Summarize the action taken and any state changes (variable names and values) in the assistant message \
+so the run log is clear.
 - Use temporary names like `temp_<short_desc>` if you need ephemeral storage.
 
 Examples:
@@ -80,8 +86,7 @@ class CopilotQuery(QueryService):
 
                     if not params_type:
                         execution_model.current_run.errors.append(
-                            "Invalid tool parameter type: (Did you forget to import this type?)"
-                            + params[0].type
+                            "Invalid tool parameter type: (Did you forget to import this type?)" + params[0].type
                         )
 
                     tool = define_tool(
@@ -115,7 +120,7 @@ class CopilotQuery(QueryService):
             prompt=execution_model.context.window,
             provider="copilot",
             status=RunStatus.RUNNING,
-            start_time=datetime.now(timezone.utc),
+            start_time=datetime.now(UTC),
         )
 
         def handle_event(event):
@@ -140,32 +145,19 @@ class CopilotQuery(QueryService):
                 if run.reasoning is None:
                     run.reasoning = [""]
                 run.reasoning[-1] += d.delta_content
-                if (
-                    not run.content_blocks
-                    or run.content_blocks[-1].type != ContentBlockType.REASONING
-                ):
-                    run.content_blocks.append(
-                        ContentBlock(type=ContentBlockType.REASONING)
-                    )
+                if not run.content_blocks or run.content_blocks[-1].type != ContentBlockType.REASONING:
+                    run.content_blocks.append(ContentBlock(type=ContentBlockType.REASONING))
                 run.content_blocks[-1].text += d.delta_content
 
             elif event.type == SessionEventType.ASSISTANT_MESSAGE_DELTA:
                 if run.responses is None:
                     run.responses = [""]
                 run.responses[-1] += d.delta_content
-                if (
-                    not run.content_blocks
-                    or run.content_blocks[-1].type != ContentBlockType.RESPONSE
-                ):
-                    run.content_blocks.append(
-                        ContentBlock(type=ContentBlockType.RESPONSE)
-                    )
+                if not run.content_blocks or run.content_blocks[-1].type != ContentBlockType.RESPONSE:
+                    run.content_blocks.append(ContentBlock(type=ContentBlockType.RESPONSE))
                 run.content_blocks[-1].text += d.delta_content
 
-            elif (
-                event.type == SessionEventType.ASSISTANT_TURN_END
-                or event.type == SessionEventType.ASSISTANT_MESSAGE
-            ):
+            elif event.type == SessionEventType.ASSISTANT_TURN_END or event.type == SessionEventType.ASSISTANT_MESSAGE:
                 # Start a new entry for the next turn
                 if run.responses is not None:
                     run.responses.append("")
@@ -196,7 +188,9 @@ class CopilotQuery(QueryService):
 
             elif event.type == SessionEventType.TOOL_EXECUTION_START:
                 if d.tool_name == "report_intent":
-                    return  # This is an internal tool used for logging the agent's intent, we can ignore it in the run log.
+                    # This is an internal tool used for logging the agent's intent,
+                    # we can ignore it in the run log.
+                    return
                 run.tool_calls.append(
                     ToolCall(
                         tool_name=d.tool_name,
@@ -233,7 +227,7 @@ class CopilotQuery(QueryService):
                 )
 
             elif event.type == SessionEventType.SESSION_SHUTDOWN:
-                run.end_time = datetime.now(timezone.utc)
+                run.end_time = datetime.now(UTC)
                 run.status = RunStatus.COMPLETED
                 if d.shutdown_type:
                     run.shutdown_reason = ShutdownReason(d.shutdown_type.value)
@@ -256,12 +250,10 @@ class CopilotQuery(QueryService):
 
         session.on(handle_event)
 
-        response = await session.send_and_wait(
-            MessageOptions(prompt=execution_model.context.window), timeout=300
-        )
+        response = await session.send_and_wait(MessageOptions(prompt=execution_model.context.window), timeout=300)
 
         if run.status != RunStatus.COMPLETED:
-            run.end_time = datetime.now(timezone.utc)
+            run.end_time = datetime.now(UTC)
             run.status = RunStatus.COMPLETED
         if run.start_time and run.end_time:
             run.duration_ms = (run.end_time - run.start_time).total_seconds() * 1000

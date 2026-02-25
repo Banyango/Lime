@@ -201,6 +201,26 @@ async def test_execute_async_should_process_for_loop_when_iterating_over_list():
 
 
 @pytest.mark.asyncio
+async def test_execute_async_should_break_for_loop_when_break_statement_encountered():
+    # Arrange
+    operation = _create_operation()
+    operation.execution_model.context.set_variable("items", ["a", "b", "c", "d", "e"])
+    mgx_content = """
+for item in items:
+    <<Item: ${item}>>
+    if item == "c":
+        break
+"""
+
+    # Act
+    await operation.execute_async(mgx_content)
+
+    # Assert
+    # Should only process items a, b, and c, then break
+    assert operation.execution_model.context.window == "Item: a\nItem: b\nItem: c\n"
+
+
+@pytest.mark.asyncio
 async def test_execute_async_should_handle_if_node_when_condition_is_true():
     # Arrange
     operation = _create_operation()
@@ -453,6 +473,50 @@ async def test_execute_async_should_handle_nested_for_loops():
 
 
 @pytest.mark.asyncio
+async def test_execute_async_should_break_inner_loop_only_when_break_in_nested_loop():
+    # Arrange
+    operation = _create_operation()
+    operation.execution_model.context.set_variable("outer", [1, 2, 3])
+    operation.execution_model.context.set_variable("inner", ["a", "b", "c"])
+    mgx_content = """
+for x in outer:
+    <<Outer: ${x}>>
+    for y in inner:
+        <<${x}${y} >>
+        if y == "b":
+            break
+"""
+
+    # Act
+    await operation.execute_async(mgx_content)
+
+    # Assert
+    # Each outer iteration should process inner a and b, then break
+    # All three outer iterations should complete
+    expected = "Outer: 1\n1a\n1b\nOuter: 2\n2a\n2b\nOuter: 3\n3a\n3b\n"
+    assert operation.execution_model.context.window == expected
+
+
+@pytest.mark.asyncio
+async def test_execute_async_should_break_immediately_when_break_at_start_of_loop():
+    # Arrange
+    operation = _create_operation()
+    operation.execution_model.context.set_variable("items", ["a", "b", "c"])
+    mgx_content = """
+for item in items:
+    break
+    <<Item: ${item}>>
+"""
+
+    # Act
+    await operation.execute_async(mgx_content)
+
+    # Assert
+    # Should break before processing any items
+    assert operation.execution_model.context.window == ""
+
+
+@pytest.mark.asyncio
 async def test_execute_async_should_process_import_node_when_import_present():
     # Arrange
     operation = _create_operation()
@@ -517,17 +581,6 @@ def test_normalize_include_path_should_append_mg_extension_when_extension_is_mis
 
     # Assert
     assert result == "salt/use-uv/use-uv.mg"
-
-
-def test_normalize_include_path_should_keep_md_extension_when_extension_is_allowed():
-    # Arrange
-    sut = _create_operation()
-
-    # Act
-    result = sut._normalize_include_path("salt/setup.md")
-
-    # Assert
-    assert result == "salt/setup.md"
 
 
 def test_normalize_include_path_should_raise_value_error_when_extension_is_not_supported():

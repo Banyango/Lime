@@ -37,7 +37,10 @@ class ExecutionModel:
 
     @property
     def current_run(self) -> Run | None:
-        """Get the current run for the latest turn in the execution model. None if there are no turns or the latest turn has no run."""
+        """Get the current run for the latest turn in the execution model.
+
+        None if there are no turns or the latest turn has no run.
+        """
         return self.turns[-1].run if self.turns else None
 
     @property
@@ -45,9 +48,7 @@ class ExecutionModel:
         """Get the current turn in the execution model. None if there are no turns."""
         return self.turns[-1] if self.turns else None
 
-    def start_run(
-        self, prompt: str, provider: str, status: RunStatus, start_time: datetime
-    ) -> Run:
+    def start_run(self, prompt: str, provider: str, status: RunStatus, start_time: datetime) -> Run:
         """Start a new LLM Agent run with the given prompt, provider, status, and start time.
 
         Args:
@@ -89,3 +90,9 @@ class ExecutionModel:
             error (str): The error message for the import error.
         """
         self.import_errors.append(error)
+
+
+class BreakSignal(Exception):
+    """Internal signal raised when a BreakNode."""
+
+    pass

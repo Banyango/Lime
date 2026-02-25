@@ -1,4 +1,4 @@
-from typing import Callable
+from collections.abc import Callable
 
 from rich.console import Group
 from textual.app import App, ComposeResult
@@ -68,8 +68,7 @@ class LimeApp(App):
             scroll.scroll_end(animate=False)
 
         all_done = self._execution_model.turns and all(
-            t.run and t.run.status in (RunStatus.COMPLETED, RunStatus.ERROR)
-            for t in self._execution_model.turns
+            t.run and t.run.status in (RunStatus.COMPLETED, RunStatus.ERROR) for t in self._execution_model.turns
         )
         if all_done:
             self.set_timer(0.5, self._exit)
@@ -87,4 +86,3 @@ class LimeApp(App):
         """Disable auto-scroll when user uses arrow keys or page up/down."""
         if event.key in ("up", "down", "pageup", "pagedown", "home", "end"):
             self._auto_scroll = False
-

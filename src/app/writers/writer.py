@@ -6,27 +6,21 @@ from rich.markdown import Markdown
 from rich.panel import Panel
 from rich.rule import Rule
 from rich.syntax import Syntax
-from rich.text import Text
 from rich.table import Table
+from rich.text import Text
 from wireup import injectable
 
-from app.writers.textual_app import LimeApp
-
 from app.config import AppConfig
+from app.writers.textual_app import LimeApp
 from core.agents.models import ExecutionModel
 from core.interfaces.ui import UI
 from entities.function import FunctionCall
-from entities.run import Run, RunStatus, ContentBlockType, ToolCall
+from entities.run import ContentBlockType, Run, RunStatus, ToolCall
 
 LOGO = Text.from_ansi(
-    "\033[32m"
-    " _ _\n"
-    "| (_)_ __ ___   ___\n"
-    "| | | '_ ` _ \\ / _ \\\n"
-    "| | | | | | | |  __/\n"
-    "|_|_|_| |_| |_|\\___|\n"
-    "\033[0m"
+    "\033[32m _ _\n| (_)_ __ ___   ___\n| | | '_ ` _ \\ / _ \\\n| | | | | | | |  __/\n|_|_|_| |_| |_|\\___|\n\033[0m"
 )
+
 
 @injectable(as_type=UI)
 class CliWriter(UI):
@@ -90,9 +84,7 @@ class CliWriter(UI):
                 parts.append(
                     Panel(
                         Text(
-                            "\n".join(condensed_reasoning)
-                            if condensed_reasoning
-                            else block.text,
+                            "\n".join(condensed_reasoning) if condensed_reasoning else block.text,
                             style="dim",
                         ),
                         title="Reasoning",
@@ -154,7 +146,6 @@ class CliWriter(UI):
 
         parts.append(Text())
 
-
         # Run header
         status_style = {
             RunStatus.PENDING: "dim",
@@ -197,9 +188,7 @@ class CliWriter(UI):
         if tc.arguments:
             try:
                 args_str = json.dumps(tc.arguments, indent=2)
-                tool_parts.append(
-                    Syntax(args_str, "json", theme="monokai", line_numbers=False)
-                )
+                tool_parts.append(Syntax(args_str, "json", theme="monokai", line_numbers=False))
             except (TypeError, ValueError):
                 tool_parts.append(Text(str(tc.arguments), style="dim"))
 

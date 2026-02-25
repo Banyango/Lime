@@ -28,9 +28,7 @@ class FuncPlugin(AgentPlugin):
         result_value = result.groups()[1] if len(result.groups()) > 1 else None
 
         match = re.search(r"([A-Za-z_][\w\.]*)\(\s*(.*?)\s*\)", method_value)
-        func_param_str = (
-            match.groups()[1] if match and len(match.groups()) > 1 else None
-        )
+        func_param_str = match.groups()[1] if match and len(match.groups()) > 1 else None
         func_params = func_param_str.split(",") if func_param_str else []
 
         all_params = dict()
@@ -40,16 +38,12 @@ class FuncPlugin(AgentPlugin):
             if value:
                 all_params[key_stripped] = value
 
-        call = execution_model.add_function_call_log(
-            method=method_value, params=all_params
-        )
+        call = execution_model.add_function_call_log(method=method_value, params=all_params)
 
         try:
             results = eval(method_value, execution_model.globals_dict, all_params)
         except Exception as e:
-            execution_model.import_errors.append(
-                f"Error calling function '{method_value}': {str(e)}"
-            )
+            execution_model.import_errors.append(f"Error calling function '{method_value}': {str(e)}")
             return
 
         call.result = results

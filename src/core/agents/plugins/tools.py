@@ -21,9 +21,7 @@ class ToolsPlugin(AgentPlugin):
             params (str): The parameters for the request.
             execution_model (ExecutionModel): The execution model for the current agent run.
         """
-        pattern = re.compile(
-            r"^\s*([A-Za-z_]\w*)\s*\(\s*(.*?)\s*\)\s*(?:=>\s*(.+))?\s*$"
-        )
+        pattern = re.compile(r"^\s*([A-Za-z_]\w*)\s*\(\s*(.*?)\s*\)\s*(?:=>\s*(.+))?\s*$")
         match = pattern.match(params)
 
         if not match:
@@ -51,6 +49,4 @@ class ToolsPlugin(AgentPlugin):
             result_types = result_var.split(",")
             result_types = [r.strip() for r in result_types]
 
-        execution_model.context.add_tool(
-            Tool(name=func_name, params=parameters, return_types=result_types)
-        )
+        execution_model.context.add_tool(Tool(name=func_name, params=parameters, return_types=result_types))
