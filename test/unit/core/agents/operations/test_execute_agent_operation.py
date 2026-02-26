@@ -123,6 +123,22 @@ Hello, World!
 
 
 @pytest.mark.asyncio
+async def test_execute_async_parses_model_field_in_metadata():
+    # Arrange
+    operation = _create_operation()
+    mgx_content = """---
+model: "custom-model"
+---
+"""
+
+    # Act
+    await operation.execute_async(mgx_content)
+
+    # Assert
+    assert operation.execution_model.metadata == {"model": '"custom-model"'}
+
+
+@pytest.mark.asyncio
 async def test_execute_async_should_replace_variables_in_text_when_variable_exists():
     # Arrange
     operation = _create_operation()

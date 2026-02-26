@@ -104,10 +104,14 @@ class CopilotQuery(QueryService):
         # Build tool list for the session (set and get variable tools first)
         session_tools = [set_var_tool, get_var_tool] + extra_tools
 
+        model_value = execution_model.model
+        if isinstance(model_value, str):
+            # Strip surrounding quotes if parser preserved them in front-matter
+            model_value = model_value.strip('"').strip("'")
         session = await self.client.con.create_session(
             SessionConfig(
                 system_message=SystemMessageAppendConfig(content=SYSTEM_PROMPT),
-                model="gpt-5-mini",
+                model=model_value or "gpt-5-mini",
                 streaming=True,
                 infinite_sessions=InfiniteSessionConfig(
                     enabled=True,
