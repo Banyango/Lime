@@ -67,11 +67,12 @@ class LimeApp(App):
             scroll = self.query_one("#scroll", VerticalScroll)
             scroll.scroll_end(animate=False)
 
-        all_done = self._execution_model.turns and all(
-            t.run and t.run.status in (RunStatus.COMPLETED, RunStatus.ERROR) for t in self._execution_model.turns
-        )
-        if all_done:
-            self.set_timer(0.5, self._exit)
+        if self._execution_model.turns:
+            all_done = all(
+                t.run and t.run.status in (RunStatus.COMPLETED, RunStatus.ERROR) for t in self._execution_model.turns
+            )
+            if all_done:
+                self.set_timer(0.5, self._exit)
 
     def _exit(self) -> None:
         self.exit()
