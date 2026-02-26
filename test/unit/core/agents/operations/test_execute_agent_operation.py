@@ -56,6 +56,7 @@ class AlwaysTrustedIntegrity:
 class FakeIncludeNode:
     def __init__(self, template_name: str):
         self.template_name = template_name
+        self.params = {}
 
 
 class FakeParser:
@@ -292,8 +293,7 @@ async def test_execute_async_should_handle_include_when_file_exists(tmp_path):
     include_file = tmp_path / "include.mg"
     include_file.write_text("<<Included content>>")
 
-    mgx_content = """[[ include.mg ]]
-"""
+    mgx_content = """[[ include.mg ]]"""
 
     # Act
     await operation.execute_async(mgx_content, base_path=tmp_path)

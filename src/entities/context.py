@@ -4,8 +4,8 @@ from entities.tool import Tool
 
 
 class Context:
-    def __init__(self):
-        self.data = {}
+    def __init__(self, initial_data: dict[str, Any] | None = None):
+        self.data = initial_data or {}
         self.window = ""
         self.tools: list[Tool] = []
 

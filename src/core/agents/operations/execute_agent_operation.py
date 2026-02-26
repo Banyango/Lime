@@ -22,6 +22,7 @@ from core.agents.models import BreakSignal, ExecutionModel
 from core.agents.plugins.import_plugin import ImportPlugin
 from core.interfaces.agent_plugin import AgentPlugin
 from core.interfaces.prompt_integrity import PromptIntegrity
+from entities.context import Context
 from entities.prompt_integrity import TRACKED_PROMPT_EXTENSIONS, PromptUnverifiedPathError
 
 EQUALITY_OR_LOGICAL_OPERATORS = ["==", "!=", ">", "<", ">=", "<=", " and ", " or ", " not ", " in ", " is "]
@@ -57,49 +58,53 @@ class ExecuteAgentOperation:
 
         self.execution_model.start_turn()
 
-        await self._process_nodes_async(nodes)
+        await self._process_nodes_async(nodes, self.execution_model.context)
 
-    async def _process_nodes_async(self, nodes: list[Node]):
+    async def _process_nodes_async(self, nodes: list[Node], context: Context | None = None):
         """Process a list of AST nodes, executing actions based on node type.
 
         Args:
             nodes: List of parsed AST nodes to process
+            context: Context to use for all operations within this method
         """
+        if context is None:
+            context = self.execution_model.context
+
         for node in nodes:
             if isinstance(node, TextNode):
-                final_content = self.replace_variables_in_text_node(node.content)
-                self.execution_model.context.add_to_context_window(final_content)
+                final_content = self.replace_variables_in_text_node(node.content, context)
+                context.add_to_context_window(final_content)
 
             elif isinstance(node, VariableNode):
-                value = self.execution_model.context.get_variable_value(node.name)
+                value = context.get_variable_value(node.name)
                 if value is not None:
-                    self.execution_model.context.add_to_context_window(str(value))
+                    context.add_to_context_window(str(value))
 
             elif isinstance(node, IfNode):
-                condition_value = self._evaluate_condition(node.condition)
+                condition_value = self._evaluate_condition(node.condition, context)
                 if self._is_truthy(condition_value):
-                    await self._process_nodes_async(node.true_block)
+                    await self._process_nodes_async(node.true_block, context)
                 elif node.false_block:
-                    await self._process_nodes_async(node.false_block)
+                    await self._process_nodes_async(node.false_block, context)
 
             elif isinstance(node, BreakNode):
                 raise BreakSignal()
 
             elif isinstance(node, ForNode):
-                items = self.execution_model.context.get_variable_value(node.iterable)
+                items = context.get_variable_value(node.iterable)
                 if items:
                     for item in items:
-                        self.execution_model.context.add_to_state(node.iterator, item)
+                        context.add_to_state(node.iterator, item)
                         try:
-                            await self._process_nodes_async(node.block)
+                            await self._process_nodes_async(node.block, context)
                         except BreakSignal:
                             break
                         finally:
-                            self.execution_model.context.remove_from_state(node.iterator)
+                            context.remove_from_state(node.iterator)
 
             elif isinstance(node, StateNode):
                 variable = json.loads(node.initial_value)
-                self.execution_model.context.set_variable(node.variable_name, variable)
+                context.set_variable(node.variable_name, variable)
 
             elif isinstance(node, ImportNode):
                 ImportPlugin.execute_import(node.raw_import, self.execution_model)
@@ -133,7 +138,11 @@ class ExecuteAgentOperation:
                 content = content_bytes.decode()
                 parser = Parser()
                 _, include_nodes = parser.parse(content)
-                await self._process_nodes_async(include_nodes)
+
+                scoped_context = Context(node.params)
+                await self._process_nodes_async(include_nodes, scoped_context)
+
+                context.add_to_context_window(scoped_context.window)
 
             elif isinstance(node, EffectNode):
                 await self._execute_effect_async(node.raw_content)
@@ -186,7 +195,7 @@ class ExecuteAgentOperation:
             return value != 0
         return True
 
-    def _evaluate_condition(self, condition: str) -> Any:
+    def _evaluate_condition(self, condition: str, context: Context) -> Any:
         """Evaluate a condition, which can be a simple variable or a Python expression.
 
         Args:
@@ -199,23 +208,25 @@ class ExecuteAgentOperation:
 
         if does_condition_contain_equality_or_logical:
             try:
-                namespace = dict(self.execution_model.context.data)
+                namespace = dict(context.data)
                 result = eval(condition, {"__builtins__": {}}, namespace)
                 return result
             except Exception:
                 # If evaluation fails, treat as a falsy value
                 return None
 
-        result = self.execution_model.context.get_variable_value(condition)
+        result = context.get_variable_value(condition)
 
         return result
 
-    def replace_variables_in_text_node(self, content: str) -> str:
+    def replace_variables_in_text_node(self, content: str, context: Context | None = None) -> str:
+        if context is None:
+            context = self.execution_model.context
         pattern = r"\$\{([a-zA-Z_][\w\.]*)\}"
 
         def resolve_variable(name: str):
             parts = name.split(".")
-            value = self.execution_model.context.get_variable_value(parts[0])
+            value = context.get_variable_value(parts[0])
             if value is None:
                 return None
             for part in parts[1:]:

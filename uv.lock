@@ -241,7 +241,7 @@ docs = [
 requires-dist = [
     { name = "anyio", specifier = ">=4.12.1" },
     { name = "github-copilot-sdk", specifier = ">=0.1.23" },
-    { name = "margarita", specifier = ">=0.3.5" },
+    { name = "margarita", specifier = ">=0.3.6" },
     { name = "rich", specifier = ">=13.7.0" },
     { name = "textual", specifier = ">=0.80.0" },
     { name = "wireup", specifier = ">=2.6.0" },
