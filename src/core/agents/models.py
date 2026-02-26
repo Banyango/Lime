@@ -19,6 +19,7 @@ class ExecutionModel:
         self.header: str = ""
         self.context = Context()
         self.import_errors = []
+        self.warnings: list[str] = []
         self.metadata: dict[str, Any] = {}
         self.turns: list[Turn] = []
         self.globals_dict: dict[str, Any] = globals()
@@ -34,6 +35,11 @@ class ExecutionModel:
         self.turns.append(turn)
 
         return turn
+
+    @property
+    def model(self) -> str | None:
+        """Get the model specified in the .mgx front-matter, or None if absent."""
+        return self.metadata.get("model")
 
     @property
     def current_run(self) -> Run | None:
@@ -90,6 +96,14 @@ class ExecutionModel:
             error (str): The error message for the import error.
         """
         self.import_errors.append(error)
+
+    def add_warning(self, warning: str):
+        """Add a warning message to the execution model.
+
+        Args:
+            warning (str): The warning message.
+        """
+        self.warnings.append(warning)
 
 
 class BreakSignal(Exception):

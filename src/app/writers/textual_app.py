@@ -72,9 +72,9 @@ class LimeApp(App):
                 t.run and t.run.status in (RunStatus.COMPLETED, RunStatus.ERROR) for t in self._execution_model.turns
             )
             if all_done:
-                self.set_timer(0.5, self._exit)
+                self.set_timer(0.5, self._shutdown)
 
-    def _exit(self) -> None:
+    def _shutdown(self) -> None:
         self.exit()
 
     def action_toggle_auto_scroll(self) -> None:

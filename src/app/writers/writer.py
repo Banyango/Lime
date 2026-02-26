@@ -43,6 +43,13 @@ class CliWriter(UI):
             renderables.append(Rule(style="red"))
             renderables.append(Text())
 
+        if model.warnings:
+            renderables.append(Rule("Warnings", style="yellow"))
+            for warning in model.warnings:
+                renderables.append(Text(str(warning), style="yellow"))
+            renderables.append(Rule(style="yellow"))
+            renderables.append(Text())
+
         if model.header:
             renderables.append(Text(model.header, style="bold cyan"))
             renderables.append(Text())
