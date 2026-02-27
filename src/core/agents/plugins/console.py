@@ -22,8 +22,5 @@ class ConsolePlugin(AgentPlugin):
         final_string = execution_model.context.replace_variables_in_content(params)
 
         execution_model.current_run.content_blocks.append(
-            ContentBlock(
-                type=ContentBlockType.LOGGING,
-                text=final_string
-            )
+            ContentBlock(type=ContentBlockType.LOGGING, text=final_string)
         )

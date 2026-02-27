@@ -64,11 +64,17 @@ class CliWriter(UI):
         renderables.append(Text("Executing...", style="dim green"))
         renderables.append(Text())
 
+        last_index = len(model.turns) - 1
         for i, turn in enumerate(model.turns):
-            renderables.extend(self._render_function_calls(turn.function_calls))
+            is_last = i == last_index
+            if is_last:
+                renderables.extend(self._render_function_calls(turn.function_calls))
 
             if turn.run:
-                renderables.extend(self._render_run(turn.run, i + 1))
+                if is_last:
+                    renderables.extend(self._render_run(turn.run, i + 1))
+                else:
+                    renderables.extend(self._render_run_summary(turn.run, i + 1))
 
         return Group(*renderables) if renderables else Group(Text("Waiting..."))
 
@@ -174,6 +180,28 @@ class CliWriter(UI):
         parts.append(header)
 
         return parts
+
+    def _render_run_summary(self, run: Run, index: int) -> list:
+        """Return a compact one-line summary for a completed (non-active) turn."""
+        status_style = {
+            RunStatus.PENDING: "dim",
+            RunStatus.RUNNING: "bold yellow",
+            RunStatus.IDLE: "bold blue",
+            RunStatus.COMPLETED: "bold green",
+            RunStatus.ERROR: "bold red",
+        }.get(run.status, "dim")
+
+        header = Text()
+        header.append(f"Run {index}", style="bold")
+        if run.model:
+            header.append(f"  {run.model}", style="dim")
+        header.append(f"  [{run.status.value}]", style=status_style)
+        if run.duration_ms is not None:
+            header.append(f"  {run.duration_ms / 1000:.1f}s", style="dim")
+        if run.tokens.total_tokens > 0:
+            header.append(f"  {run.tokens.total_tokens:,} tokens", style="dim")
+
+        return [header, Text()]
 
     @staticmethod
     def _render_tool_call(tc: ToolCall) -> Panel:

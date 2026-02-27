@@ -1,4 +1,3 @@
-import pytest
 
 from entities.context import Context
 from entities.tool import Param, Tool

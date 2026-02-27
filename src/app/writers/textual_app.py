@@ -54,7 +54,8 @@ class LimeApp(App):
     - Provide a small Textual application UI that displays Lime execution output in a scrollable panel.
 
     Public API
-    - __init__(build_display: Callable[[], Group], execution_model: ExecutionModel) -> None: Configure UI with display builder and execution model.
+    - __init__(build_display: Callable[[], Group], execution_model: ExecutionModel) -> None:
+        Configure UI with display builder and execution model.
     - compose() -> ComposeResult: Build the Textual layout (Header, VerticalScroll with ExecutionWidget, Footer).
     - action_toggle_auto_scroll() -> None: Toggle automatic scrolling behavior.
 
@@ -65,7 +66,8 @@ class LimeApp(App):
     ```
 
     Notes
-    - Auto-scroll is toggled off when the user navigates with keyboard keys; the polling interval is small for near-real-time updates.
+    - Auto-scroll is toggled off when the user navigates with keyboard keys; the polling interval is small for
+     near-real-time updates.
     """
 
     CSS = """
@@ -80,9 +82,9 @@ class LimeApp(App):
     ]
 
     def __init__(
-        self,
-        build_display: Callable[[], Group],
-        execution_model: ExecutionModel,
+            self,
+            build_display: Callable[[], Group],
+            execution_model: ExecutionModel,
     ) -> None:
         super().__init__()
         self._build_display = build_display

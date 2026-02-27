@@ -8,6 +8,7 @@ class UI(ABC):
 
     Provides methods for rendering output and updating progress in the terminal.
     """
+
     @abstractmethod
     async def render_ui(self, execution_model: ExecutionModel):
         """Render the UI for the agent execution.

@@ -10,6 +10,7 @@ class SetVariableFromState(BaseModel):
     Fields correspond to the expected API for storing variables in the agent's
     state from within the LLM tool call.
     """
+
     name: str
     value: str | list | dict | int | float | bool | None
 

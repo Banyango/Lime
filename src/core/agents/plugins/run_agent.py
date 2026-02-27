@@ -9,6 +9,7 @@ class RunAgentPlugin(AgentPlugin):
     Translates @effect run tokens into calls to the configured QueryService and
     integrates streaming responses back into the execution model.
     """
+
     def __init__(self, agent_service: QueryService):
         super().__init__()
         self.agent_service = agent_service

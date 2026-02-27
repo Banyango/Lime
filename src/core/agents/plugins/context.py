@@ -8,6 +8,7 @@ class ContextPlugin(AgentPlugin):
     Supports operations like clearing the context window or resetting state
     variables as requested by @effect context commands.
     """
+
     def is_match(self, token: str) -> bool:
         """Determine if the plugin matches the given token.
 

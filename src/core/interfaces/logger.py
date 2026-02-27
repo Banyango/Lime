@@ -1,6 +1,4 @@
-from abc import abstractmethod, ABC
-
-from wireup import injectable
+from abc import ABC, abstractmethod
 
 
 class LoggerService(ABC):

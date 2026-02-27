@@ -10,6 +10,7 @@ class FuncPlugin(AgentPlugin):
     The plugin runs allowed Python functions in the agent's execution context and
     stores results back into the execution model state.
     """
+
     def is_match(self, token: str) -> bool:
         """Determine if the plugin matches the given token.
 

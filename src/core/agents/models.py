@@ -15,6 +15,7 @@ class Turn:
     Contains the prompt, model response, and any metadata produced for the
     turn that may be persisted in the run history.
     """
+
     run: Run | None
     function_calls: list[FunctionCall]
 
@@ -24,6 +25,7 @@ class ExecutionModel:
 
     Holds context, globals, registered tools, and collected turns for the run.
     """
+
     """
     Purpose
     - Coordinate and store state for a running agent execution, including context, turns, and metadata.
@@ -44,7 +46,7 @@ class ExecutionModel:
     >>> run = em.start_run('prompt', 'local', RunStatus.RUNNING, datetime.utcnow())
 
     Notes
-    - The ExecutionModel exposes simple helpers intended for orchestration; detailed Run internals are documented in Run.
+    - The ExecutionModel exposes simple helpers intended for orchestration; detailed Run internals are documented in Run
     """
 
     def __init__(self):
@@ -143,6 +145,7 @@ class BreakSignal(Exception):
 
     Raised by plugins or execution logic to indicate an early stop condition.
     """
+
     """Internal signal raised when a BreakNode."""
 
     pass

@@ -10,6 +10,7 @@ class PromptIntegrity(ABC):
     Implementations should provide verification hooks to ensure prompt files
     haven't been tampered with and to raise appropriate errors on mismatch.
     """
+
     @abstractmethod
     def load_policy(self, manifest_path: Path, lock_path: Path):
         """Load and validate prompt integrity policy files."""

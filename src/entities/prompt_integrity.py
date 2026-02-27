@@ -27,6 +27,7 @@ class PromptManifest:
         path: Filesystem path of the prompt file.
         hash: Content hash used for integrity verification.
     """
+
     version: int
     root: str
     include: list[str]
@@ -41,6 +42,7 @@ class PromptLock:
         owner: Identifier of the entity holding the lock.
         timestamp: Time when the lock was acquired.
     """
+
     version: int
     algorithm: str
     manifest_sha256: str

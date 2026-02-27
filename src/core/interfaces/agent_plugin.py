@@ -9,6 +9,7 @@ class AgentPlugin(ABC):
     Plugins must implement is_match to indicate which tokens they handle and
     handle to execute plugin-specific logic against the execution model.
     """
+
     @abstractmethod
     def is_match(self, token: str) -> bool:
         """Determine if the plugin matches the given token.

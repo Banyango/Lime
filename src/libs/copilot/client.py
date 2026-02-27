@@ -1,4 +1,4 @@
-from copilot import CopilotClient, SessionConfig, CopilotSession
+from copilot import CopilotClient, CopilotSession, SessionConfig
 from wireup import injectable
 
 
@@ -9,6 +9,7 @@ class GithubCopilotClient:
     Provides convenience methods for opening sessions, sending events, and
     translating SDK errors into the project's error types.
     """
+
     def __init__(self):
         self.con: CopilotClient | None = None
         self.session: CopilotSession | None = None
@@ -33,4 +34,3 @@ class GithubCopilotClient:
 
         await self.session.destroy()
         self.session = None
-

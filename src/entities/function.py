@@ -10,6 +10,7 @@ class FunctionCall:
         args: Positional arguments for the function call.
         kwargs: Keyword arguments for the function call.
     """
+
     """One-line summary: Record of a function call executed by an agent.
 
     Purpose

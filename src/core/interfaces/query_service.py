@@ -8,6 +8,7 @@ class QueryService(ABC):
 
     Implementations should provide methods to run queries and stream results.
     """
+
     @abstractmethod
     async def execute_query(self, execution_model: ExecutionModel) -> str:
         """Execute the agent with the given context.

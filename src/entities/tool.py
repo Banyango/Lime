@@ -10,6 +10,7 @@ class Param:
         type: Expected parameter type annotation.
         default: Optional default value.
     """
+
     """One-line summary: Descriptor for a tool parameter.
 
     Purpose
@@ -37,6 +38,7 @@ class Tool:
         params: List of Param objects describing the tool's parameters.
         return_type: The expected return type of the tool.
     """
+
     """Represents a callable tool available to agents.
 
     One-line summary: Metadata for a tool including its parameters and return types.
@@ -51,7 +53,7 @@ class Tool:
         description (str | None): Optional human-friendly description.
 
     Examples:
-        >>> Tool(name='add', params=[Param('a','int'), Param('b','int')], return_types=['int'], description='Add numbers')
+    >>> Tool(name='add', params=[Param('a','int'), Param('b','int')], return_types=['int'], description='Add numbers')
     """
     name: str
     params: list[Param]

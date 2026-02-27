@@ -1,5 +1,5 @@
-from typing import Any
 import re
+from typing import Any
 
 from entities.tool import Tool
 
@@ -10,6 +10,7 @@ class Context:
     The Context stores persistent variables accessible to functions and tools and
     maintains the sliding window of messages sent to the LLM.
     """
+
     """
     Purpose
     - Represent the agent's runtime context, holding state variables, the context window, and available tools.

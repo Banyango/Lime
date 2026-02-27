@@ -145,12 +145,17 @@ class CopilotQuery(QueryService):
                 await self.client.create_session(session_config)
             elif hasattr(self.client, "con") and hasattr(self.client.con, "create_session"):
                 session = await self.client.con.create_session(session_config)
-                setattr(self.client, "session", session)
+                self.client.session = session
             else:
                 raise RuntimeError("Copilot client does not support session creation")
 
         if self.logger_service:
-            self.logger_service.print(f"[Run started]\n model={execution_model.model} prompt={execution_model.context.window},\n state=f{execution_model.context.data}\n tools={[tool.name for tool in session_tools]}")
+            self.logger_service.print(
+                f"[Run started]\n"
+                f" model={execution_model.model}"
+                f" prompt={execution_model.context.window},\n"
+                f" state=f{execution_model.context.data}\n tools={[tool.name for tool in session_tools]}"
+            )
 
         run = execution_model.start_run(
             prompt=execution_model.context.window,
@@ -292,7 +297,9 @@ class CopilotQuery(QueryService):
 
         self.client.session.on(handle_event)
 
-        response = await self.client.session.send_and_wait(MessageOptions(prompt=execution_model.context.window), timeout=300)
+        response = await self.client.session.send_and_wait(
+            MessageOptions(prompt=execution_model.context.window), timeout=300
+        )
 
         if run.status != RunStatus.COMPLETED:
             run.end_time = datetime.now(UTC)
@@ -301,7 +308,12 @@ class CopilotQuery(QueryService):
             run.duration_ms = (run.end_time - run.start_time).total_seconds() * 1000
 
         if self.logger_service:
-            self.logger_service.print(f"[Run completed] duration={(run.duration_ms or 0)/1000:.1f}s status={run.status.value} shutdown_reason={run.shutdown_reason}")
+            self.logger_service.print(
+                f"[Run completed]"
+                f" duration={(run.duration_ms or 0) / 1000:.1f}s"
+                f" status={run.status.value}"
+                f" shutdown_reason={run.shutdown_reason}"
+            )
 
         execution_model.current_run.result = response.data.content if response else None
 

@@ -1,5 +1,4 @@
 import json
-import re
 from pathlib import Path
 from typing import Any
 
@@ -34,6 +33,7 @@ class ExecuteAgentOperation:
     Responsibilities include parsing the Margarita AST, dispatching @effect
     tokens to plugins, managing execution state, and collecting run results.
     """
+
     def __init__(
         self,
         plugins: list[AgentPlugin],
