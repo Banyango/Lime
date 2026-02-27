@@ -5,21 +5,35 @@ from typing import Any
 
 
 class ContentBlockType(Enum):
+    """Enumeration of content block types used in run outputs.
+
+    Values indicate the origin or format of a content block (text, code, etc.).
+    """
+    """Types of content blocks produced during a run (reasoning, response, tool output, etc.)."""
     REASONING = "reasoning"
     RESPONSE = "response"
     FUNCTION_CALL = "function_call"
     TOOL_CALL = "tool_call"
+    LOGGING = "logging"
     OTHER = "other"
 
 
 @dataclass
 class ContentBlock:
+    """Represents a single block of content produced during a run.
+
+    Attributes:
+        type: The ContentBlockType of this block.
+        content: The raw string content.
+    """
+    """A single block of content generated during a run, with a type and optional reference."""
     type: ContentBlockType
     text: str = ""
     ref: str | None = None
 
 
 class RunStatus(Enum):
+    """Lifecycle states for an agent Run."""
     PENDING = "starting"
     RUNNING = "running"
     IDLE = "idle"
@@ -28,6 +42,7 @@ class RunStatus(Enum):
 
 
 class ShutdownReason(Enum):
+    """Reasons why a run may have been shut down."""
     ROUTINE = "routine"
     ERROR = "error"
     TIMEOUT = "timeout"
@@ -36,6 +51,7 @@ class ShutdownReason(Enum):
 
 @dataclass
 class TokenUsage:
+    """Token accounting for a run: input/output and cache-related tokens."""
     input_tokens: int = 0
     output_tokens: int = 0
     cache_read_tokens: int = 0
@@ -54,6 +70,7 @@ class TokenUsage:
 
 @dataclass
 class ModelUsage:
+    """Per-model usage and cost breakdown for a run."""
     model: str
     request_count: int = 0
     cost: float = 0.0
@@ -62,6 +79,7 @@ class ModelUsage:
 
 @dataclass
 class ToolCall:
+    """Record of an individual tool invocation during a run."""
     tool_name: str
     tool_call_id: str
     arguments: Any = None
@@ -73,6 +91,7 @@ class ToolCall:
 
 @dataclass
 class CodeChanges:
+    """Summary of code modifications produced or applied by a run."""
     files_modified: list[str] = field(default_factory=list)
     lines_added: int = 0
     lines_removed: int = 0
@@ -80,6 +99,7 @@ class CodeChanges:
 
 @dataclass
 class RunError:
+    """Structured error information captured during a run."""
     message: str
     code: str | None = None
     stack: str | None = None
@@ -88,6 +108,7 @@ class RunError:
 
 @dataclass
 class RunContext:
+    """Execution environment context for a run (cwd, git metadata, repository info)."""
     cwd: str | None = None
     git_root: str | None = None
     branch: str | None = None
@@ -97,6 +118,7 @@ class RunContext:
 
 @dataclass
 class Run:
+    """Comprehensive record of an agent Run, including lifecycle, usage, content, and results."""
     # Identity
     session_id: str | None = None
     turn_id: str | None = None

@@ -5,6 +5,11 @@ from core.interfaces.agent_plugin import AgentPlugin
 
 
 class FuncPlugin(AgentPlugin):
+    """Plugin implementing the 'func' @effect which executes Python functions.
+
+    The plugin runs allowed Python functions in the agent's execution context and
+    stores results back into the execution model state.
+    """
     def is_match(self, token: str) -> bool:
         """Determine if the plugin matches the given token.
 

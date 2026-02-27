@@ -5,6 +5,11 @@ from entities.prompt_integrity import PromptLock
 
 
 class PromptIntegrity(ABC):
+    """Interface for verifying and managing prompt integrity.
+
+    Implementations should provide verification hooks to ensure prompt files
+    haven't been tampered with and to raise appropriate errors on mismatch.
+    """
     @abstractmethod
     def load_policy(self, manifest_path: Path, lock_path: Path):
         """Load and validate prompt integrity policy files."""

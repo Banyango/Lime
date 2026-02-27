@@ -236,6 +236,27 @@ def test_example():
     mock_dependency.assert_called_once_with(...)
 ```
 
+## Class docstring standard
+
+The project follows a concise class docstring standard to make class responsibilities and public APIs easy to discover and consistent across the codebase. Required sections:
+
+- Purpose: One-paragraph description of what the class represents and why it exists.
+- Public API: Bullet list of the main public methods and properties with brief signatures and one-line descriptions.
+- Examples: Short usage examples (doctest-style or simple snippets) showing typical instantiation and calls.
+- Notes (optional): Any implementation or compatibility notes.
+
+Style conformance rules:
+
+- Use triple-quoted string literal immediately after the class definition.
+- Keep Purpose to 1-3 sentences and avoid internal implementation details.
+- List only the public surface (methods/attrs other modules are expected to use).
+- Examples should be short and focused; use >>> for simple interactive examples when appropriate.
+- Keep lines under 88 characters when possible.
+- Follow the guidance in the project's AGENTS.md architecture section: document externally visible behaviour and avoid leaking internal orchestration details.
+
+Reference: Developer onboarding should link to this section as the canonical class docstring guideline.
+
+
 ## Key Design Decisions
 
 1. **Plugin-based extensibility**: New `@effect` commands can be added by implementing `AgentPlugin`

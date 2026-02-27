@@ -21,6 +21,12 @@ DEFAULT_PROMPT_MANIFEST_CONTENT = (
 
 @dataclass(frozen=True)
 class PromptManifest:
+    """Metadata manifest describing a prompt file included in execution.
+
+    Attributes:
+        path: Filesystem path of the prompt file.
+        hash: Content hash used for integrity verification.
+    """
     version: int
     root: str
     include: list[str]
@@ -29,6 +35,12 @@ class PromptManifest:
 
 @dataclass(frozen=True)
 class PromptLock:
+    """Represents a lock placed on a prompt to prevent concurrent modification.
+
+    Attributes:
+        owner: Identifier of the entity holding the lock.
+        timestamp: Time when the lock was acquired.
+    """
     version: int
     algorithm: str
     manifest_sha256: str

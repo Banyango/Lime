@@ -1,3 +1,5 @@
+import pytest
+
 from entities.context import Context
 from entities.tool import Param, Tool
 
@@ -204,3 +206,62 @@ def test_clear_context_should_reset_window_when_called():
 
     # Assert
     assert context.window == ""
+
+
+def test_replace_variables_in_content_should_replace_simple_variable():
+    # Arrange
+    context = _create_context()
+    context.set_variable("name", "Bob")
+
+    # Act
+    result = context.replace_variables_in_content("Hello, ${name}!")
+
+    # Assert
+    assert result == "Hello, Bob!"
+
+
+def test_replace_variables_in_content_should_replace_nested_variable():
+    # Arrange
+    context = _create_context()
+    context.set_variable("user", {"name": "Charlie"})
+
+    # Act
+    result = context.replace_variables_in_content("Hello, ${user.name}!")
+
+    # Assert
+    assert result == "Hello, Charlie!"
+
+
+def test_replace_variables_in_content_should_replace_with_empty_when_variable_not_found():
+    # Arrange
+    context = _create_context()
+
+    # Act
+    result = context.replace_variables_in_content("Hello, ${unknown}!")
+
+    # Assert
+    assert result == "Hello, !"
+
+
+def test_replace_variables_in_content_should_replace_multiple_variables():
+    # Arrange
+    context = _create_context()
+    context.set_variable("first", "John")
+    context.set_variable("last", "Doe")
+
+    # Act
+    result = context.replace_variables_in_content("Name: ${first} ${last}")
+
+    # Assert
+    assert result == "Name: John Doe"
+
+
+def test_replace_variables_in_content_should_leave_malformed_placeholder_unchanged():
+    # Arrange
+    context = _create_context()
+
+    # Act
+    result = context.replace_variables_in_content("Value: ${1invalid}")
+
+    # Assert
+    assert result == "Value: ${1invalid}"

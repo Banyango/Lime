@@ -4,6 +4,11 @@ from core.interfaces.query_service import QueryService
 
 
 class RunAgentPlugin(AgentPlugin):
+    """Plugin that executes LLM queries using a QueryService implementation.
+
+    Translates @effect run tokens into calls to the configured QueryService and
+    integrates streaming responses back into the execution model.
+    """
     def __init__(self, agent_service: QueryService):
         super().__init__()
         self.agent_service = agent_service

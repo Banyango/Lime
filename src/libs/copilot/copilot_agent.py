@@ -6,6 +6,7 @@ from copilot.types import InfiniteSessionConfig, SystemMessageAppendConfig, Tool
 from wireup import injectable
 
 from core.agents.models import ExecutionModel
+from core.interfaces.logger import LoggerService
 from core.interfaces.query_service import QueryService
 from entities.run import (
     CodeChanges,
@@ -25,16 +26,18 @@ from libs.copilot.tools.set_variable_in_state import (
     create_set_variable_tool,
 )
 
-SYSTEM_PROMPT = """You are an autonomous coding agent with explicit access to two tools for shared state: \
-a get-variable tool and a set-variable tool. For every piece of state you need to read or update you must \
+SYSTEM_PROMPT = """# Role
+You are an autonomous coding agent with explicit access to two extra tools for shared state:
+a get-variable tool and a set-variable tool. For every piece of state you need to read or update you must
 use these tools; do not assume, invent, or hardcode values from memory or ask the user for them.
-Rules:
-- Always call the get-variable tool before using any variable. If the variable is missing or empty, \
+
+## Rules:
+- Always call the get-variable tool before using any variable. If the variable is missing or empty,
 do not fabricate it — either compute it from available data or create it via the set-variable tool.
-- Always call the set-variable tool to persist any information you want available to future steps.
-- After each tool call, read and respect the tool's result. If a tool call fails, handle the failure \
+- Always call the set-variable tool to persist any information you want available to future steps. This includes docs, plans, decisions, and any intermediate variables you create. Do not assume that any information is stored in memory unless you have explicitly saved it with set-variable.
+- After each tool call, read and respect the tool's result. If a tool call fails, handle the failure
 and record an error variable via set-variable if needed.
-- Use deterministic variable names and prefer primitive values (string/number/boolean). \
+- Use deterministic variable names and prefer primitive values (string/number/boolean).
 If you must store structured data, store it as JSON under a clear name.
 - Do not prompt the user for missing values; act autonomously using available tools.
 
@@ -43,7 +46,7 @@ Tool call format (follow this pattern when requesting a tool):
 - Write: CALL_TOOL: set_variable with arguments { "name": "<variable_name>", "value": <value> }
 
 Behavior after actions:
-- Summarize the action taken and any state changes (variable names and values) in the assistant message \
+- Summarize the action taken and any state changes (variable names and values) in the assistant message
 so the run log is clear.
 - Use temporary names like `temp_<short_desc>` if you need ephemeral storage.
 
@@ -56,8 +59,15 @@ Always follow these rules for each run so the shared state remains accurate and 
 
 @injectable(as_type=QueryService)
 class CopilotQuery(QueryService):
-    def __init__(self, copilot_client: GithubCopilotClient):
+    """QueryService implementation for interacting with GitHub Copilot.
+
+    Manages sessions, streams events from the Copilot SDK, and exposes run
+    methods used by RunAgentPlugin to execute LLM queries.
+    """
+
+    def __init__(self, copilot_client: GithubCopilotClient, logger: LoggerService | None = None):
         self.client = copilot_client
+        self.logger_service = logger
 
     async def execute_query(self, execution_model: ExecutionModel) -> str:
         """Execute a query using the Copilot client.
@@ -108,17 +118,39 @@ class CopilotQuery(QueryService):
         if isinstance(model_value, str):
             # Strip surrounding quotes if parser preserved them in front-matter
             model_value = model_value.strip('"').strip("'")
-        session = await self.client.con.create_session(
-            SessionConfig(
-                system_message=SystemMessageAppendConfig(content=SYSTEM_PROMPT),
-                model=model_value or "gpt-5-mini",
-                streaming=True,
-                infinite_sessions=InfiniteSessionConfig(
-                    enabled=True,
-                ),
-                tools=session_tools,
-            ),
-        )
+
+        session_attr = getattr(self.client, "session", None)
+        if not session_attr:
+            try:
+                session_config = SessionConfig(
+                    system_message=SystemMessageAppendConfig(content=SYSTEM_PROMPT),
+                    model=model_value or "gpt-5-mini",
+                    reasoning_effort="low",
+                    streaming=True,
+                    infinite_sessions=InfiniteSessionConfig(
+                        enabled=True,
+                    ),
+                    tools=session_tools,
+                )
+            except TypeError:
+                # Fallback for test doubles that accept a simpler signature
+                session_config = SessionConfig(
+                    system_message=SystemMessageAppendConfig(content=SYSTEM_PROMPT),
+                    model=model_value or "gpt-5-mini",
+                    streaming=True,
+                    tools=session_tools,
+                )
+            # Prefer client.create_session when available, otherwise fall back to client.con.create_session
+            if hasattr(self.client, "create_session"):
+                await self.client.create_session(session_config)
+            elif hasattr(self.client, "con") and hasattr(self.client.con, "create_session"):
+                session = await self.client.con.create_session(session_config)
+                setattr(self.client, "session", session)
+            else:
+                raise RuntimeError("Copilot client does not support session creation")
+
+        if self.logger_service:
+            self.logger_service.print(f"[Run started]\n model={execution_model.model} prompt={execution_model.context.window},\n state=f{execution_model.context.data}\n tools={[tool.name for tool in session_tools]}")
 
         run = execution_model.start_run(
             prompt=execution_model.context.window,
@@ -164,8 +196,12 @@ class CopilotQuery(QueryService):
             elif event.type == SessionEventType.ASSISTANT_TURN_END or event.type == SessionEventType.ASSISTANT_MESSAGE:
                 # Start a new entry for the next turn
                 if run.responses is not None:
+                    if self.logger_service:
+                        self.logger_service.print(f"[response] {run.responses[-1]}")
                     run.responses.append("")
                 if run.reasoning is not None:
+                    if self.logger_service:
+                        self.logger_service.print(f"[reasoning] {run.reasoning[-1]}")
                     run.reasoning.append("")
             elif event.type == SessionEventType.SESSION_USAGE_INFO:
                 pass
@@ -215,6 +251,8 @@ class CopilotQuery(QueryService):
                         tc.result = d.result.content if d.result else None
                         tc.success = d.success
                         tc.duration_ms = d.duration
+                        if self.logger_service:
+                            self.logger_service.print(f"[Tool call - {tc.tool_name}]: {tc.result}")
                         break
 
             elif event.type == SessionEventType.SESSION_MODEL_CHANGE:
@@ -252,9 +290,9 @@ class CopilotQuery(QueryService):
             elif event.type == SessionEventType.SESSION_IDLE:
                 run.status = RunStatus.IDLE
 
-        session.on(handle_event)
+        self.client.session.on(handle_event)
 
-        response = await session.send_and_wait(MessageOptions(prompt=execution_model.context.window), timeout=300)
+        response = await self.client.session.send_and_wait(MessageOptions(prompt=execution_model.context.window), timeout=300)
 
         if run.status != RunStatus.COMPLETED:
             run.end_time = datetime.now(UTC)
@@ -262,8 +300,12 @@ class CopilotQuery(QueryService):
         if run.start_time and run.end_time:
             run.duration_ms = (run.end_time - run.start_time).total_seconds() * 1000
 
-        await session.destroy()
+        if self.logger_service:
+            self.logger_service.print(f"[Run completed] duration={(run.duration_ms or 0)/1000:.1f}s status={run.status.value} shutdown_reason={run.shutdown_reason}")
 
         execution_model.current_run.result = response.data.content if response else None
 
         return response.data.content
+
+    async def clear_session(self):
+        await self.client.destroy_current_session()

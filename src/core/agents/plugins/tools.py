@@ -6,6 +6,11 @@ from entities.tool import Param, Tool
 
 
 class ToolsPlugin(AgentPlugin):
+    """Registers tools that the LLM can call during a run.
+
+    ToolsPlugin exposes tool metadata to the Copilot client so the model can
+    execute functions via the tool interface.
+    """
     def is_match(self, token: str) -> bool:
         """Determine if the plugin matches the given token.
 

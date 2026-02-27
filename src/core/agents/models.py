@@ -10,11 +10,43 @@ from entities.run import Run, RunStatus
 
 @dataclass
 class Turn:
+    """Represents a single LLM turn during execution.
+
+    Contains the prompt, model response, and any metadata produced for the
+    turn that may be persisted in the run history.
+    """
     run: Run | None
     function_calls: list[FunctionCall]
 
 
 class ExecutionModel:
+    """Central execution state for running an .mgx agent file.
+
+    Holds context, globals, registered tools, and collected turns for the run.
+    """
+    """
+    Purpose
+    - Coordinate and store state for a running agent execution, including context, turns, and metadata.
+
+    Public API
+    - __init__() -> None: Create an empty execution model.
+    - start() -> None: Initialize execution header and state for a run.
+    - start_turn() -> Turn: Begin a new turn and return it.
+    - start_run(prompt: str, provider: str, status: RunStatus, start_time: datetime) -> Run: Create and attach a Run to the current turn.
+    - add_function_call_log(method: str, params: dict) -> FunctionCall: Record a function call for auditing.
+    - add_import_error(error: str) -> None: Record an import error.
+    - add_warning(warning: str) -> None: Record a warning message.
+
+    Examples
+    >>> em = ExecutionModel()
+    >>> em.start()
+    >>> turn = em.start_turn()
+    >>> run = em.start_run('prompt', 'local', RunStatus.RUNNING, datetime.utcnow())
+
+    Notes
+    - The ExecutionModel exposes simple helpers intended for orchestration; detailed Run internals are documented in Run.
+    """
+
     def __init__(self):
         self.header: str = ""
         self.context = Context()
@@ -107,6 +139,10 @@ class ExecutionModel:
 
 
 class BreakSignal(Exception):
+    """Internal exception used to short-circuit execution of a loop or flow.
+
+    Raised by plugins or execution logic to indicate an early stop condition.
+    """
     """Internal signal raised when a BreakNode."""
 
     pass

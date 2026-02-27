@@ -29,6 +29,11 @@ EQUALITY_OR_LOGICAL_OPERATORS = ["==", "!=", ">", "<", ">=", "<=", " and ", " or
 
 
 class ExecuteAgentOperation:
+    """Operation that orchestrates execution of a .mgx agent file.
+
+    Responsibilities include parsing the Margarita AST, dispatching @effect
+    tokens to plugins, managing execution state, and collecting run results.
+    """
     def __init__(
         self,
         plugins: list[AgentPlugin],
@@ -72,7 +77,10 @@ class ExecuteAgentOperation:
 
         for node in nodes:
             if isinstance(node, TextNode):
-                final_content = self.replace_variables_in_text_node(node.content, context)
+                if context is None:
+                    context = self.execution_model.context
+
+                final_content = context.replace_variables_in_content(node.content)
                 context.add_to_context_window(final_content)
 
             elif isinstance(node, VariableNode):
@@ -218,32 +226,6 @@ class ExecuteAgentOperation:
         result = context.get_variable_value(condition)
 
         return result
-
-    def replace_variables_in_text_node(self, content: str, context: Context | None = None) -> str:
-        if context is None:
-            context = self.execution_model.context
-        pattern = r"\$\{([a-zA-Z_][\w\.]*)\}"
-
-        def resolve_variable(name: str):
-            parts = name.split(".")
-            value = context.get_variable_value(parts[0])
-            if value is None:
-                return None
-            for part in parts[1:]:
-                if isinstance(value, dict):
-                    value = value.get(part)
-                else:
-                    value = getattr(value, part, None)
-                if value is None:
-                    return None
-            return value
-
-        def repl(match: re.Match) -> str:
-            name = match.group(1)
-            val = resolve_variable(name)
-            return str(val) if val is not None else ""
-
-        return re.sub(pattern, repl, content)
 
     def _normalize_include_path(self, template_name: str) -> str:
         """Normalize the include path.

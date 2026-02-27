@@ -5,6 +5,10 @@ from core.agents.models import ExecutionModel
 
 
 class GetVariableFromState(BaseModel):
+    """Pydantic model for the get_variable tool parameters.
+
+    Used by the Copilot tools layer to request variables from the agent state.
+    """
     variable: str
 
 

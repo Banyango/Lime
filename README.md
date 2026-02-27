@@ -105,3 +105,7 @@ iwr -useb https://raw.githubusercontent.com/Banyango/lime/main/install-windows.p
 
 
 Logo Designed by Freepik
+
+## Class documentation standard
+
+See the project class documentation standard for required docstring sections and concrete examples (data class, service class, abstract/base class): docs/class-documentation.md

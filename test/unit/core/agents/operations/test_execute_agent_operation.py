@@ -348,58 +348,6 @@ async def test_execute_async_should_start_turn_when_executed():
 
 
 @pytest.mark.asyncio
-async def test_replace_variables_in_text_node_should_replace_simple_variable():
-    # Arrange
-    operation = _create_operation()
-    operation.execution_model.context.set_variable("name", "Bob")
-
-    # Act
-    result = operation.replace_variables_in_text_node("Hello, ${name}!")
-
-    # Assert
-    assert result == "Hello, Bob!"
-
-
-@pytest.mark.asyncio
-async def test_replace_variables_in_text_node_should_replace_nested_variable():
-    # Arrange
-    operation = _create_operation()
-    operation.execution_model.context.set_variable("user", {"name": "Charlie"})
-
-    # Act
-    result = operation.replace_variables_in_text_node("Hello, ${user.name}!")
-
-    # Assert
-    assert result == "Hello, Charlie!"
-
-
-@pytest.mark.asyncio
-async def test_replace_variables_in_text_node_should_replace_with_empty_when_variable_not_found():
-    # Arrange
-    operation = _create_operation()
-
-    # Act
-    result = operation.replace_variables_in_text_node("Hello, ${unknown}!")
-
-    # Assert
-    assert result == "Hello, !"
-
-
-@pytest.mark.asyncio
-async def test_replace_variables_in_text_node_should_replace_multiple_variables():
-    # Arrange
-    operation = _create_operation()
-    operation.execution_model.context.set_variable("first", "John")
-    operation.execution_model.context.set_variable("last", "Doe")
-
-    # Act
-    result = operation.replace_variables_in_text_node("Name: ${first} ${last}")
-
-    # Assert
-    assert result == "Name: John Doe"
-
-
-@pytest.mark.asyncio
 async def test_is_truthy_should_return_true_when_value_is_true():
     # Arrange
     operation = _create_operation()

@@ -7,6 +7,7 @@ from libs.copilot.copilot_agent import CopilotQuery
 
 
 class FakeSession:
+    """Test double for a Copilot session used in unit tests."""
     def __init__(self):
         self._handler = None
 
@@ -21,6 +22,7 @@ class FakeSession:
 
 
 class FakeCon:
+    """Simple container object used in tests to mimic a connection."""
     def __init__(self):
         self.received_model = None
 
@@ -36,6 +38,7 @@ class FakeCon:
 
 
 class FakeClient:
+    """Mock client used in unit tests to emulate Copilot client behavior."""
     def __init__(self):
         self.con = FakeCon()
 

@@ -1,9 +1,38 @@
 from typing import Any
+import re
 
 from entities.tool import Tool
 
 
 class Context:
+    """Holds variables and execution window state used during agent runs.
+
+    The Context stores persistent variables accessible to functions and tools and
+    maintains the sliding window of messages sent to the LLM.
+    """
+    """
+    Purpose
+    - Represent the agent's runtime context, holding state variables, the context window, and available tools.
+
+    Public API
+    - __init__(initial_data: dict[str, Any] | None = None) -> None: Initialize context with optional data.
+    - add_to_context_window(content: str) -> None: Append content to the context window.
+    - get_variable_value(name: str) -> Any: Retrieve variable values supporting dotted notation, slicing and range().
+    - set_variable(name: str, value: Any) -> None: Set a variable in state.
+    - add_tool(tool: Tool) -> None: Register a tool for agent use.
+    - clear_tools() -> None: Remove all registered tools.
+    - clear_context() -> None: Clear the context window.
+
+    Examples
+    >>> ctx = Context({'user': {'name': 'A'}})
+    >>> ctx.get_variable_value('user.name')
+    'A'
+    >>> ctx.add_to_context_window('Note')
+
+    Notes
+    - Docstring focuses on external behavior; internal implementation details are omitted.
+    """
+
     def __init__(self, initial_data: dict[str, Any] | None = None):
         self.data = initial_data or {}
         self.window = ""
@@ -121,3 +150,27 @@ class Context:
     def clear_context(self):
         """Clear the agent's context."""
         self.window = ""
+
+    def replace_variables_in_content(self, content: str) -> str:
+        pattern = r"\$\{([a-zA-Z_][\w\.]*)\}"
+
+        def resolve_variable(name: str):
+            parts = name.split(".")
+            value = self.get_variable_value(parts[0])
+            if value is None:
+                return None
+            for part in parts[1:]:
+                if isinstance(value, dict):
+                    value = value.get(part)
+                else:
+                    value = getattr(value, part, None)
+                if value is None:
+                    return None
+            return value
+
+        def repl(match: re.Match) -> str:
+            name = match.group(1)
+            val = resolve_variable(name)
+            return str(val) if val is not None else ""
+
+        return re.sub(pattern, repl, content)

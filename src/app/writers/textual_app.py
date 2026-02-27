@@ -11,7 +11,28 @@ from entities.run import RunStatus
 
 
 class ExecutionWidget(Static):
-    """Widget that renders the Rich Group from _build_display()."""
+    """Widget that renders the Rich Group from _build_display().
+
+    Purpose
+    - Render the composed Rich Group produced by the provided build_display callable inside a Textual Static widget.
+
+    Public API
+    - __init__(build_display: Callable[[], Group]) -> None: Initialize with a callable that returns a Rich Group.
+    - on_mount() -> None: Mount hook that sets initial content.
+    - refresh_display() -> None: Re-render the widget content from the build_display callable.
+
+    Examples
+    ```python
+    def build_display() -> Group:
+        return Group()
+
+    widget = ExecutionWidget(build_display)
+    widget.refresh_display()
+    ```
+
+    Notes
+    - This widget delegates rendering to the provided callable and is intentionally lightweight.
+    """
 
     def __init__(self, build_display: Callable[[], Group]) -> None:
         super().__init__()
@@ -27,7 +48,25 @@ class ExecutionWidget(Static):
 
 
 class LimeApp(App):
-    """Textual app with a scrollable panel for lime execution output."""
+    """Textual app with a scrollable panel for lime execution output.
+
+    Purpose
+    - Provide a small Textual application UI that displays Lime execution output in a scrollable panel.
+
+    Public API
+    - __init__(build_display: Callable[[], Group], execution_model: ExecutionModel) -> None: Configure UI with display builder and execution model.
+    - compose() -> ComposeResult: Build the Textual layout (Header, VerticalScroll with ExecutionWidget, Footer).
+    - action_toggle_auto_scroll() -> None: Toggle automatic scrolling behavior.
+
+    Examples
+    ```python
+    app = LimeApp(build_display=my_builder, execution_model=my_model)
+    app.run()
+    ```
+
+    Notes
+    - Auto-scroll is toggled off when the user navigates with keyboard keys; the polling interval is small for near-real-time updates.
+    """
 
     CSS = """
     VerticalScroll {
