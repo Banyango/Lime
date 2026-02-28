@@ -70,7 +70,6 @@ def test_build_header_should_include_warnings():
     parts = writer._build_header(model)
 
     # Assert
-    rendered = " ".join(getattr(p, "_text", [str(p)])[0] if hasattr(p, "_text") else str(p) for p in parts)
     console = Console(file=io.StringIO(), highlight=False)
     from rich.console import Group
 

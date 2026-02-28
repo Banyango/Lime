@@ -12,9 +12,7 @@ class InputPlugin(AgentPlugin):
     async def handle(self, params: str, execution_model: ExecutionModel):
         match = re.match(r'^"(.*?)"\s*=>\s*(\w+)$', params.strip())
         if not match:
-            raise ValueError(
-                f"Invalid input syntax: '{params}'. Expected: \"prompt text\" => variable_name"
-            )
+            raise ValueError(f"Invalid input syntax: '{params}'. Expected: \"prompt text\" => variable_name")
 
         prompt_text = match.group(1)
         variable_name = match.group(2)

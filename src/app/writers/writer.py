@@ -15,7 +15,7 @@ from app.writers.textual_app import LimeApp
 from core.agents.models import ExecutionModel
 from core.interfaces.ui import UI
 from entities.function import FunctionCall
-from entities.run import ContentBlockType, Run, RunStatus, ToolCall, ContentBlock
+from entities.run import ContentBlock, ContentBlockType, Run, RunStatus, ToolCall
 
 LOGO = Text.from_ansi(
     "\033[32m _ _\n| (_)_ __ ___   ___\n| | | '_ ` _ \\ / _ \\\n| | | | | | | |  __/\n|_|_|_| |_| |_|\\___|\n\033[0m"

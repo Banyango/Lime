@@ -2,7 +2,7 @@ from datetime import UTC, datetime
 
 from copilot import MessageOptions, SessionConfig, define_tool
 from copilot.generated.session_events import SessionEventType
-from copilot.types import InfiniteSessionConfig, SystemMessageAppendConfig, Tool, UserInputResponse, UserInputRequest
+from copilot.types import InfiniteSessionConfig, SystemMessageAppendConfig, Tool, UserInputRequest, UserInputResponse
 from wireup import injectable
 
 from core.agents.models import ExecutionModel, InputRequest
@@ -78,8 +78,7 @@ class CopilotQuery(QueryService):
         if not self.client.con:
             raise Exception("Copilot client is not connected")
 
-        async def on_user_input_request(request: UserInputRequest,
-                                        properties: dict[str, str]) -> UserInputResponse:
+        async def on_user_input_request(request: UserInputRequest, properties: dict[str, str]) -> UserInputResponse:
             """Handle a user input request from the Copilot session.
 
             This method is called when the agent uses the get-variable tool to request a variable that has not been set yet.

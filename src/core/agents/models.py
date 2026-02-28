@@ -65,7 +65,7 @@ class ExecutionModel:
     """
 
     def __init__(self):
-        self.pending_input: InputRequest | None  = None
+        self.pending_input: InputRequest | None = None
         self.header: str = ""
         self.context = Context()
         self.import_errors = []

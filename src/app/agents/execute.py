@@ -8,9 +8,9 @@ from app.lifecycle import with_lifecycle
 from core.agents.models import ExecutionModel
 from core.agents.operations.execute_agent_operation import ExecuteAgentOperation
 from core.agents.plugins.console import ConsoleLogPlugin
-from core.agents.plugins.input import InputPlugin
 from core.agents.plugins.context import ContextPlugin
 from core.agents.plugins.func import FuncPlugin
+from core.agents.plugins.input import InputPlugin
 from core.agents.plugins.run_agent import RunAgentPlugin
 from core.agents.plugins.tools import ToolsPlugin
 from core.interfaces.logger import LoggerService
