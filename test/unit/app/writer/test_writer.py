@@ -192,3 +192,73 @@ def test_build_display_should_show_function_calls_for_last_turn():
 
     # Assert
     assert "active_func" in output
+
+
+def test_build_display_should_show_executing_when_turns_are_running():
+    # Arrange
+    writer = _create_writer()
+    model = ExecutionModel()
+    model.start()
+    model.start_turn()
+    model.turns[-1].run = _create_run(status=RunStatus.RUNNING)
+
+    # Act
+    output = _render_group_to_str(writer, model)
+
+    # Assert
+    assert "Executing..." in output
+    assert "All turns completed" not in output
+
+
+def test_build_display_should_show_completed_when_all_turns_are_done():
+    # Arrange
+    writer = _create_writer()
+    model = ExecutionModel()
+    model.start()
+    model.start_turn()
+    model.turns[-1].run = _create_run(status=RunStatus.COMPLETED)
+
+    # Act
+    output = _render_group_to_str(writer, model)
+
+    # Assert
+    assert "All turns completed" in output
+    assert "Executing..." not in output
+
+
+def test_build_display_should_show_completed_when_all_turns_have_completed_or_error_status():
+    # Arrange
+    writer = _create_writer()
+    model = ExecutionModel()
+    model.start()
+    # First turn completed
+    model.start_turn()
+    model.turns[-1].run = _create_run(status=RunStatus.COMPLETED)
+    # Second turn has error
+    model.start_turn()
+    model.turns[-1].run = _create_run(status=RunStatus.ERROR)
+
+    # Act
+    output = _render_group_to_str(writer, model)
+
+    # Assert
+    assert "All turns completed" in output
+    assert "Executing..." not in output
+
+
+def test_build_display_should_not_show_execution_status_when_no_runs():
+    # Arrange
+    writer = _create_writer()
+    model = ExecutionModel()
+    model.start()
+    model.start_turn()
+    # Turn exists but has no run
+
+    # Act
+    output = _render_group_to_str(writer, model)
+
+    # Assert
+    assert "Executing..." not in output
+    assert "All turns completed" not in output
+
+

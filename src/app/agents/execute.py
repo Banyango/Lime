@@ -7,10 +7,12 @@ from app.container import container
 from app.lifecycle import with_lifecycle
 from core.agents.models import ExecutionModel
 from core.agents.operations.execute_agent_operation import ExecuteAgentOperation
+from core.agents.plugins.console import ConsoleLogPlugin
 from core.agents.plugins.context import ContextPlugin
 from core.agents.plugins.func import FuncPlugin
 from core.agents.plugins.run_agent import RunAgentPlugin
 from core.agents.plugins.tools import ToolsPlugin
+from core.interfaces.logger import LoggerService
 from core.interfaces.prompt_integrity import PromptIntegrity
 from core.interfaces.query_service import QueryService
 from core.interfaces.ui import UI
@@ -43,6 +45,7 @@ async def execute(file_name: str, verify_prompts: bool | None, allow_unverified:
 
     ui = await container.get(UI)
     query_service = await container.get(QueryService)
+    logger_service = await container.get(LoggerService)
     prompt_integrity = None
 
     if should_verify_prompts:
@@ -73,6 +76,7 @@ async def execute(file_name: str, verify_prompts: bool | None, allow_unverified:
                 FuncPlugin(),
                 ToolsPlugin(),
                 ContextPlugin(),
+                ConsoleLogPlugin(logger_service=logger_service),
             ],
             execution_model=model,
             prompt_integrity=prompt_integrity,

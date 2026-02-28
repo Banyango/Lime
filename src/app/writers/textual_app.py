@@ -7,7 +7,6 @@ from textual.containers import VerticalScroll
 from textual.widgets import Footer, Header, Static
 
 from core.agents.models import ExecutionModel
-from entities.run import RunStatus
 
 
 class ExecutionWidget(Static):
@@ -108,15 +107,6 @@ class LimeApp(App):
             scroll = self.query_one("#scroll", VerticalScroll)
             scroll.scroll_end(animate=False)
 
-        if self._execution_model.turns:
-            all_done = all(
-                t.run and t.run.status in (RunStatus.COMPLETED, RunStatus.ERROR) for t in self._execution_model.turns
-            )
-            if all_done:
-                self.set_timer(0.5, self._shutdown)
-
-    def _shutdown(self) -> None:
-        self.exit()
 
     def action_toggle_auto_scroll(self) -> None:
         """Toggle auto-scroll on/off."""

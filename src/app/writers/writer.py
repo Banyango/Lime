@@ -61,9 +61,6 @@ class CliWriter(UI):
             renderables.append(Rule(style="dim cyan"))
             renderables.append(Text())
 
-        renderables.append(Text("Executing...", style="dim green"))
-        renderables.append(Text())
-
         last_index = len(model.turns) - 1
         for i, turn in enumerate(model.turns):
             is_last = i == last_index
@@ -75,6 +72,19 @@ class CliWriter(UI):
                     renderables.extend(self._render_run(turn.run, i + 1))
                 else:
                     renderables.extend(self._render_run_summary(turn.run, i + 1))
+
+        # Check if there are any runs and if all are complete
+        has_runs = model.turns and any(t.run for t in model.turns)
+
+        if has_runs:
+            all_turns_complete = all(
+                t.run and t.run.status in (RunStatus.COMPLETED, RunStatus.ERROR) for t in model.turns if t.run
+            )
+
+            if all_turns_complete:
+                renderables.append(Text("All turns completed. (press q to quit)", style="bold green"))
+            else:
+                renderables.append(Text("Executing...", style="dim green"))
 
         return Group(*renderables) if renderables else Group(Text("Waiting..."))
 
@@ -116,6 +126,12 @@ class CliWriter(UI):
                 tc = tool_call_map.get(block.ref)
                 if tc:
                     parts.append(self._render_tool_call(tc))
+            elif block.type == ContentBlockType.LOGGING:
+                if not block.text:
+                    continue
+                parts.append(
+                    Text(f"[INFO] {block.text}", style="cyan dim"),
+                )
 
         # Errors
         for err in run.errors:

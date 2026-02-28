@@ -17,7 +17,8 @@ from margarita.parser import (
     VariableNode,
 )
 
-from core.agents.models import BreakSignal, ExecutionModel
+from core.agents.models import BreakSignal, ExecutionModel, RunStatus
+from datetime import datetime
 from core.agents.plugins.import_plugin import ImportPlugin
 from core.interfaces.agent_plugin import AgentPlugin
 from core.interfaces.prompt_integrity import PromptIntegrity
@@ -61,9 +62,24 @@ class ExecuteAgentOperation:
 
         self.execution_model.metadata = metadata
 
+        # Initialize execution and create a turn/run so plugins can record outputs
+        self.execution_model.start()
         self.execution_model.start_turn()
+        # Start a run record so plugins that write to current_run.content_blocks work
+        run = self.execution_model.start_run(
+            prompt=metadata.get("description", ""),
+            provider="local",
+            status=RunStatus.RUNNING,
+            start_time=datetime.utcnow(),
+        )
 
         await self._process_nodes_async(nodes, self.execution_model.context)
+
+        # Mark the run as completed
+        run.end_time = datetime.utcnow()
+        run.status = RunStatus.COMPLETED
+        if run.start_time and run.end_time:
+            run.duration_ms = (run.end_time - run.start_time).total_seconds() * 1000
 
     async def _process_nodes_async(self, nodes: list[Node], context: Context | None = None):
         """Process a list of AST nodes, executing actions based on node type.
