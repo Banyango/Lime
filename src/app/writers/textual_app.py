@@ -81,9 +81,9 @@ class LimeApp(App):
     ]
 
     def __init__(
-            self,
-            build_display: Callable[[], Group],
-            execution_model: ExecutionModel,
+        self,
+        build_display: Callable[[], Group],
+        execution_model: ExecutionModel,
     ) -> None:
         super().__init__()
         self._build_display = build_display
@@ -106,7 +106,6 @@ class LimeApp(App):
         if self._auto_scroll:
             scroll = self.query_one("#scroll", VerticalScroll)
             scroll.scroll_end(animate=False)
-
 
     def action_toggle_auto_scroll(self) -> None:
         """Toggle auto-scroll on/off."""

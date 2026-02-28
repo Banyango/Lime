@@ -1,4 +1,3 @@
-
 from entities.context import Context
 from entities.tool import Param, Tool
 
@@ -89,6 +88,56 @@ def test_get_variable_value_should_return_none_when_invalid_range():
 
     # Assert
     assert result_empty is None
+    assert result_bad is None
+
+
+def test_get_variable_value_should_resolve_variables_in_range_arguments():
+    # Arrange
+    context = _create_context()
+    context.set_variable("n", 3)
+    context.set_variable("start", 2)
+    context.set_variable("end", 5)
+
+    # Act
+    result_single = context.get_variable_value("range(n)")
+    result_start_end = context.get_variable_value("range(start, end)")
+
+    # Assert
+    assert result_single == [0, 1, 2]
+    assert result_start_end == [2, 3, 4]
+
+
+def test_get_variable_value_should_handle_zero_and_negative_ranges():
+    # Arrange
+    context = _create_context()
+    context.set_variable("zero", 0)
+    context.set_variable("neg", -2)
+    context.set_variable("start_neg", -3)
+    context.set_variable("end_neg", 1)
+
+    # Act
+    result_zero = context.get_variable_value("range(zero)")
+    result_neg = context.get_variable_value("range(neg)")
+    result_start_end_neg = context.get_variable_value("range(start_neg, end_neg)")
+
+    # Assert
+    assert result_zero == []
+    # Python's range(-2) produces [] because start=0 stop=-2 is empty
+    assert result_neg == []
+    assert result_start_end_neg == [-3, -2, -1, 0]
+
+
+def test_get_variable_value_should_return_none_when_range_variable_missing_or_not_int():
+    # Arrange
+    context = _create_context()
+    context.set_variable("bad", "not_an_int")
+
+    # Act
+    result_missing = context.get_variable_value("range(missing)")
+    result_bad = context.get_variable_value("range(bad)")
+
+    # Assert
+    assert result_missing is None
     assert result_bad is None
 
 

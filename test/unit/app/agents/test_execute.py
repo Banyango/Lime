@@ -5,6 +5,7 @@ from click.testing import CliRunner
 
 import app.agents.execute as execute_module
 import app.lifecycle as lifecycle_module
+from core.interfaces.logger import LoggerService
 from core.interfaces.prompt_integrity import PromptIntegrity
 from core.interfaces.query_service import QueryService
 from core.interfaces.ui import UI
@@ -41,6 +42,10 @@ def _patch_execute_container_get(monkeypatch, prompt_integrity=None):
             return Context()
         if interface is QueryService:
             return query_service
+        if interface is LoggerService:
+            logger_service = MagicMock()
+            logger_service.print = MagicMock()
+            return logger_service
         if interface is PromptIntegrity:
             if prompt_integrity is None:
                 raise AssertionError("PromptIntegrity was requested unexpectedly.")

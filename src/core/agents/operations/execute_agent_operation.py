@@ -1,4 +1,5 @@
 import json
+from datetime import datetime
 from pathlib import Path
 from typing import Any
 
@@ -18,7 +19,6 @@ from margarita.parser import (
 )
 
 from core.agents.models import BreakSignal, ExecutionModel, RunStatus
-from datetime import datetime
 from core.agents.plugins.import_plugin import ImportPlugin
 from core.interfaces.agent_plugin import AgentPlugin
 from core.interfaces.prompt_integrity import PromptIntegrity
@@ -70,13 +70,13 @@ class ExecuteAgentOperation:
             prompt=metadata.get("description", ""),
             provider="local",
             status=RunStatus.RUNNING,
-            start_time=datetime.utcnow(),
+            start_time=datetime.now(),
         )
 
         await self._process_nodes_async(nodes, self.execution_model.context)
 
         # Mark the run as completed
-        run.end_time = datetime.utcnow()
+        run.end_time = datetime.now()
         run.status = RunStatus.COMPLETED
         if run.start_time and run.end_time:
             run.duration_ms = (run.end_time - run.start_time).total_seconds() * 1000

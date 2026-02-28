@@ -260,5 +260,3 @@ def test_build_display_should_not_show_execution_status_when_no_runs():
     # Assert
     assert "Executing..." not in output
     assert "All turns completed" not in output
-
-

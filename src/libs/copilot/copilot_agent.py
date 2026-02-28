@@ -293,7 +293,7 @@ class CopilotQuery(QueryService):
                         mu.cost = metric.requests.cost
 
             elif event.type == SessionEventType.SESSION_IDLE:
-                run.status = RunStatus.IDLE
+                pass
 
         self.client.session.on(handle_event)
 

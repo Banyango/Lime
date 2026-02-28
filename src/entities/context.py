@@ -50,9 +50,24 @@ class Context:
     def get_variable_value(self, name: str) -> Any:
         """Get a variable value from context, supporting dotted notation, range, and indexing.
 
+        Purpose
+        - Resolve variable references used by the template engine, including
+          dotted attributes, indexing/slicing, and the special "range(...)"
+          expression which may contain integer literals or variable names.
+
         Args:
             name: Variable name, possibly with dots like "user.name",
-                  range like "range(5)", or indexing like "items[0]" or "items[0:3]"
+                  range like "range(5)" or "range(start, end)", or indexing like "items[0]" or "items[0:3]"
+
+        Examples
+        >>> ctx = Context({'n': 3})
+        >>> ctx.get_variable_value('range(n)')
+        [0, 1, 2]
+
+        Notes
+        - If a variable used inside range(...) is missing or not an integer,
+          this method returns None rather than raising, allowing callers to
+          handle the error case explicitly.
         """
         # Handle range() function calls
         if name.startswith("range(") and name.endswith(")"):
@@ -62,9 +77,33 @@ class Context:
                 if not args_str:
                     return None
 
-                # Parse arguments (can be 1, 2, or 3 integers)
-                args = [int(arg.strip()) for arg in args_str.split(",")]
-                return list(range(*args))
+                # Parse arguments (can be 1, 2, or 3 values). Each arg may be
+                # an integer literal or a variable name that must be resolved
+                # from the current context.
+                raw_args = [arg.strip() for arg in args_str.split(",")]
+                parsed_args: list[int] = []
+                for arg in raw_args:
+                    if not arg:
+                        # Empty segment (e.g. trailing comma) is invalid
+                        return None
+                    # Try integer literal first
+                    try:
+                        parsed_args.append(int(arg))
+                        continue
+                    except ValueError:
+                        pass
+
+                    # Resolve variable from context; use get_variable_value so
+                    # dotted names and indexing are supported.
+                    resolved = self.get_variable_value(arg)
+                    if isinstance(resolved, bool) or resolved is None:
+                        return None
+                    try:
+                        parsed_args.append(int(resolved))
+                    except (ValueError, TypeError):
+                        return None
+
+                return list(range(*parsed_args))
             except (ValueError, TypeError):
                 return None
 
