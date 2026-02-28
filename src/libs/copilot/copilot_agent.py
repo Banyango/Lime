@@ -2,10 +2,10 @@ from datetime import UTC, datetime
 
 from copilot import MessageOptions, SessionConfig, define_tool
 from copilot.generated.session_events import SessionEventType
-from copilot.types import InfiniteSessionConfig, SystemMessageAppendConfig, Tool
+from copilot.types import InfiniteSessionConfig, SystemMessageAppendConfig, Tool, UserInputResponse, UserInputRequest
 from wireup import injectable
 
-from core.agents.models import ExecutionModel
+from core.agents.models import ExecutionModel, InputRequest
 from core.interfaces.logger import LoggerService
 from core.interfaces.query_service import QueryService
 from entities.run import (
@@ -78,6 +78,25 @@ class CopilotQuery(QueryService):
         if not self.client.con:
             raise Exception("Copilot client is not connected")
 
+        async def on_user_input_request(request: UserInputRequest,
+                                        properties: dict[str, str]) -> UserInputResponse:
+            """Handle a user input request from the Copilot session.
+
+            This method is called when the agent uses the get-variable tool to request a variable that has not been set yet.
+            The prompt argument contains the message from the agent describing what information it needs.
+
+            Args:
+                request (UserInputRequest): The user input request from the Copilot session, containing the prompt.
+                properties (dict[str, str]): Additional properties related to the request.
+            """
+            request = InputRequest(prompt=request["question"])
+            execution_model.pending_input = request
+            await request.event.wait()
+            user_input = request.response or ""
+            execution_model.pending_input = None
+
+            return UserInputResponse(answer=user_input, wasFreeform=True)
+
         # Convert any internal Tool descriptors into Copilot SDK Tool objects.
         # We'll build a list of extra tools and pass them into the session.
         extra_tools: list[Tool] = []
@@ -127,6 +146,7 @@ class CopilotQuery(QueryService):
                     model=model_value or "gpt-5-mini",
                     reasoning_effort="low",
                     streaming=True,
+                    on_user_input_request=on_user_input_request,
                     infinite_sessions=InfiniteSessionConfig(
                         enabled=True,
                     ),
@@ -236,19 +256,33 @@ class CopilotQuery(QueryService):
                     # This is an internal tool used for logging the agent's intent,
                     # we can ignore it in the run log.
                     return
-                run.tool_calls.append(
-                    ToolCall(
-                        tool_name=d.tool_name,
-                        tool_call_id=d.tool_call_id,
-                        arguments=d.arguments,
+
+                if d.tool_name == "ask_user":
+                    response = f"[Question] {d.arguments.get('question', '')}"
+                    for choice in d.arguments.get("choices", []):
+                        response += f"\n- {choice}"
+
+                    run.content_blocks.append(
+                        ContentBlock(
+                            type=ContentBlockType.INPUT,
+                            ref=d.tool_call_id,
+                            text=response,
+                        )
                     )
-                )
-                run.content_blocks.append(
-                    ContentBlock(
-                        type=ContentBlockType.TOOL_CALL,
-                        ref=d.tool_call_id,
+                else:
+                    run.tool_calls.append(
+                        ToolCall(
+                            tool_name=d.tool_name,
+                            tool_call_id=d.tool_call_id,
+                            arguments=d.arguments,
+                        )
                     )
-                )
+                    run.content_blocks.append(
+                        ContentBlock(
+                            type=ContentBlockType.TOOL_CALL,
+                            ref=d.tool_call_id,
+                        )
+                    )
 
             elif event.type == SessionEventType.TOOL_EXECUTION_COMPLETE:
                 for tc in reversed(run.tool_calls):

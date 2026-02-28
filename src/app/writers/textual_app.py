@@ -8,7 +8,7 @@ from textual.app import App, ComposeResult
 from textual.binding import Binding
 from textual.containers import Vertical, VerticalScroll
 from textual.events import Click
-from textual.widgets import Footer, Header, Static
+from textual.widgets import Footer, Header, Input, Static
 
 from core.agents.models import ExecutionModel
 
@@ -142,6 +142,16 @@ class LimeApp(App):
     #status-line {
         height: auto;
     }
+    #input-container {
+        height: auto;
+        display: none;
+        padding: 0 1;
+        border-top: solid $primary;
+    }
+    #input-prompt {
+        height: auto;
+        padding: 0 1;
+    }
     """
 
     BINDINGS = [
@@ -173,6 +183,9 @@ class LimeApp(App):
         else:
             with VerticalScroll(id="scroll"):
                 yield ExecutionWidget(self._build_display)
+        with Vertical(id="input-container"):
+            yield Static(id="input-prompt")
+            yield Input(id="input-field", placeholder="Type your answer and press Enter…")
         yield Footer()
 
     def on_mount(self) -> None:
@@ -185,9 +198,31 @@ class LimeApp(App):
             widget = self.query_one(ExecutionWidget)
             widget.refresh_display()
 
+        self._sync_input_widget()
+
         if self._auto_scroll:
             scroll = self.query_one("#scroll", VerticalScroll)
             scroll.scroll_end(animate=False)
+
+    def _sync_input_widget(self) -> None:
+        """Show or hide the input widget based on whether a pending input request exists."""
+        pending = self._execution_model.pending_input
+        container = self.query_one("#input-container", Vertical)
+        if pending is not None and not container.display:
+            self.query_one("#input-prompt", Static).update(f"[bold]{pending.prompt}[/bold]")
+            container.display = True
+            self.query_one("#input-field", Input).focus()
+        elif pending is None and container.display:
+            container.display = False
+
+    def on_input_submitted(self, event: Input.Submitted) -> None:
+        """Resolve a pending InputRequest when the user presses Enter."""
+        pending = self._execution_model.pending_input
+        if pending is None:
+            return
+        pending.response = event.value
+        self.query_one("#input-field", Input).clear()
+        pending.event.set()
 
     async def _poll_widget_mode(self) -> None:
         model = self._execution_model

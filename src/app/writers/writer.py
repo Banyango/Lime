@@ -15,7 +15,7 @@ from app.writers.textual_app import LimeApp
 from core.agents.models import ExecutionModel
 from core.interfaces.ui import UI
 from entities.function import FunctionCall
-from entities.run import ContentBlockType, Run, RunStatus, ToolCall
+from entities.run import ContentBlockType, Run, RunStatus, ToolCall, ContentBlock
 
 LOGO = Text.from_ansi(
     "\033[32m _ _\n| (_)_ __ ___   ___\n| | | '_ ` _ \\ / _ \\\n| | | | | | | |  __/\n|_|_|_| |_| |_|\\___|\n\033[0m"
@@ -170,6 +170,8 @@ class CliWriter(UI):
                 tc = tool_call_map.get(block.ref)
                 if tc:
                     parts.append(self._render_tool_call(tc))
+            elif block.type == ContentBlockType.INPUT:
+                parts.append(self._render_input(block))
             elif block.type == ContentBlockType.LOGGING:
                 if not block.text:
                     continue
@@ -292,6 +294,10 @@ class CliWriter(UI):
             tool_parts.append(Text(tc.result, style="dim"))
 
         return Panel(Group(*tool_parts), border_style="dim", expand=False)
+
+    @staticmethod
+    def _render_input(tc: ContentBlock) -> Panel:
+        return Panel(Group(Markdown(tc.text)), border_style="dim", expand=False)
 
     def _render_function_calls(self, function_calls: list[FunctionCall]) -> list:
         return [

@@ -15,6 +15,7 @@ class ContentBlockType(Enum):
     RESPONSE = "response"
     FUNCTION_CALL = "function_call"
     TOOL_CALL = "tool_call"
+    INPUT = "input"
     LOGGING = "logging"
     OTHER = "other"
 
@@ -25,7 +26,8 @@ class ContentBlock:
 
     Attributes:
         type: The ContentBlockType of this block.
-        content: The raw string content.
+        text: The textual content of this block.
+        ref: An optional reference string (e.g. tool name, function name) associated with this block.
     """
 
     """A single block of content generated during a run, with a type and optional reference."""

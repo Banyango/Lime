@@ -1,11 +1,26 @@
+import asyncio
 import json
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Any
 
 from entities.context import Context
 from entities.function import FunctionCall
 from entities.run import Run, RunStatus
+
+
+@dataclass
+class InputRequest:
+    """A pending request for user input posted by InputPlugin and resolved by the UI.
+
+    The plugin sets `pending_input` on the ExecutionModel and awaits `event`.
+    The UI reads the prompt, shows an input widget, writes the user's answer into
+    `response`, then calls `event.set()` to unblock the plugin.
+    """
+
+    prompt: str
+    response: str | None = None
+    event: asyncio.Event = field(default_factory=asyncio.Event)
 
 
 @dataclass
@@ -50,6 +65,7 @@ class ExecutionModel:
     """
 
     def __init__(self):
+        self.pending_input: InputRequest | None  = None
         self.header: str = ""
         self.context = Context()
         self.import_errors = []
