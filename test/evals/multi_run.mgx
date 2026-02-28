@@ -1,6 +1,5 @@
 ---
 description: "A prompt for loading and summarizing files."
-model: "gpt-4"
 ---
 
 @state numbers = false

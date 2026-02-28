@@ -41,6 +41,121 @@ def _render_group_to_str(writer: CliWriter, model: ExecutionModel) -> str:
     return console.file.getvalue()
 
 
+# --- _build_header ---
+
+
+def test_build_header_should_include_logo():
+    # Arrange
+    writer = _create_writer()
+    model = ExecutionModel()
+    model.start()
+
+    # Act
+    parts = writer._build_header(model)
+
+    # Assert — first element is the LOGO
+    from app.writers.writer import LOGO
+
+    assert parts[0] is LOGO
+
+
+def test_build_header_should_include_warnings():
+    # Arrange
+    writer = _create_writer()
+    model = ExecutionModel()
+    model.start()
+    model.add_warning("something deprecated")
+
+    # Act
+    parts = writer._build_header(model)
+
+    # Assert
+    rendered = " ".join(getattr(p, "_text", [str(p)])[0] if hasattr(p, "_text") else str(p) for p in parts)
+    console = Console(file=io.StringIO(), highlight=False)
+    from rich.console import Group
+
+    console.print(Group(*parts))
+    output = console.file.getvalue()
+    assert "something deprecated" in output
+
+
+def test_build_header_should_include_metadata():
+    # Arrange
+    writer = _create_writer()
+    model = ExecutionModel()
+    model.start()
+    model.metadata["version"] = "1.2.3"
+
+    # Act
+    parts = writer._build_header(model)
+
+    # Assert
+    console = Console(file=io.StringIO(), highlight=False)
+    from rich.console import Group
+
+    console.print(Group(*parts))
+    output = console.file.getvalue()
+    assert "version" in output
+    assert "1.2.3" in output
+
+
+# --- _build_status ---
+
+
+def test_build_status_should_return_none_when_no_runs():
+    # Arrange
+    writer = _create_writer()
+    model = ExecutionModel()
+    model.start()
+    model.start_turn()
+    # Turn has no run
+
+    # Act
+    result = writer._build_status(model)
+
+    # Assert
+    assert result is None
+
+
+def test_build_status_should_return_executing_when_running():
+    # Arrange
+    writer = _create_writer()
+    model = _create_execution_model_with_turns(1, status=RunStatus.RUNNING)
+
+    # Act
+    result = writer._build_status(model)
+
+    # Assert
+    assert result is not None
+    assert "Executing" in result.plain
+
+
+def test_build_status_should_return_completed_when_all_turns_done():
+    # Arrange
+    writer = _create_writer()
+    model = _create_execution_model_with_turns(2, status=RunStatus.COMPLETED)
+
+    # Act
+    result = writer._build_status(model)
+
+    # Assert
+    assert result is not None
+    assert "All turns completed" in result.plain
+
+
+def test_build_status_should_return_completed_when_turns_have_error_status():
+    # Arrange
+    writer = _create_writer()
+    model = _create_execution_model_with_turns(1, status=RunStatus.ERROR)
+
+    # Act
+    result = writer._build_status(model)
+
+    # Assert
+    assert result is not None
+    assert "All turns completed" in result.plain
+
+
 # --- _render_run_summary ---
 
 
@@ -88,6 +203,19 @@ def test_render_run_summary_should_include_token_count_when_nonzero():
     # Assert
     header = parts[0]
     assert "150" in header.plain
+
+
+def test_render_run_summary_should_include_click_hint():
+    # Arrange
+    writer = _create_writer()
+    run = _create_run(status=RunStatus.COMPLETED)
+
+    # Act
+    parts = writer._render_run_summary(run, index=1)
+
+    # Assert
+    header = parts[0]
+    assert "click to expand" in header.plain
 
 
 def test_render_run_summary_should_omit_tokens_when_zero():

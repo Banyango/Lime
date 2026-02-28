@@ -31,6 +31,7 @@ class CliWriter(UI):
         app = LimeApp(
             build_display=lambda: self._build_display(execution_model),
             execution_model=execution_model,
+            writer=self,
         )
         await app.run_async()
 
@@ -87,6 +88,49 @@ class CliWriter(UI):
                 renderables.append(Text("Executing...", style="dim green"))
 
         return Group(*renderables) if renderables else Group(Text("Waiting..."))
+
+    def _build_header(self, model: ExecutionModel) -> list:
+        """Return renderables for the static header section (logo, errors, warnings, metadata)."""
+        renderables: list[Any] = [LOGO]
+        if model.import_errors:
+            renderables.append(Rule("Import Errors", style="red"))
+            for err in model.import_errors:
+                renderables.append(Text(str(err), style="red"))
+            renderables.append(Rule(style="red"))
+            renderables.append(Text())
+
+        if model.warnings:
+            renderables.append(Rule("Warnings", style="yellow"))
+            for warning in model.warnings:
+                renderables.append(Text(str(warning), style="yellow"))
+            renderables.append(Rule(style="yellow"))
+            renderables.append(Text())
+
+        if model.header:
+            renderables.append(Text(model.header, style="bold cyan"))
+            renderables.append(Text())
+
+        if model.metadata:
+            renderables.append(Rule("Metadata", style="dim cyan"))
+            for key, value in model.metadata.items():
+                renderables.append(Text(f"{key}: {value}", style="dim"))
+            renderables.append(Rule(style="dim cyan"))
+            renderables.append(Text())
+
+        return renderables
+
+    def _build_status(self, model: ExecutionModel) -> Text | None:
+        """Return a status Text for the footer line, or None when there are no runs."""
+        has_runs = model.turns and any(t.run for t in model.turns)
+        if not has_runs:
+            return None
+
+        all_turns_complete = all(
+            t.run and t.run.status in (RunStatus.COMPLETED, RunStatus.ERROR) for t in model.turns if t.run
+        )
+        if all_turns_complete:
+            return Text("All turns completed. (press q to quit)", style="bold green")
+        return Text("Executing...", style="dim green")
 
     def _render_run(self, run: Run, index: int) -> list:
         parts = []
@@ -216,6 +260,7 @@ class CliWriter(UI):
             header.append(f"  {run.duration_ms / 1000:.1f}s", style="dim")
         if run.tokens.total_tokens > 0:
             header.append(f"  {run.tokens.total_tokens:,} tokens", style="dim")
+        header.append("  (click to expand)", style="dim")
 
         return [header, Text()]
 
