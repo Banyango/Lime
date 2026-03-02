@@ -11,10 +11,10 @@
       
       
       
-        <link rel="prev" href="../Loops/">
+        <link rel="prev" href="../Memory/">
       
       
-        <link rel="next" href="../Conditionals/">
+        <link rel="next" href="../Function%20Calls/">
       
       
         
@@ -25,7 +25,7 @@
     
     
       
-        <title>State - Lime</title>
+        <title>Logging - Lime</title>
       
     
     
@@ -80,7 +80,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#state" class="md-skip">
+        <a href="#logging" class="md-skip">
           Skip to content
         </a>
       
@@ -131,7 +131,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              State
+              Logging
             
           </span>
         </div>
@@ -620,19 +620,10 @@
                 
   
   
-    
   
   
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
-      
-      
-        
-      
-      
-      <a href="./" class="md-nav__link md-nav__link--active">
+    <li class="md-nav__item">
+      <a href="../State/" class="md-nav__link">
         
   
   
@@ -648,7 +639,6 @@
   
 
       </a>
-      
     </li>
   
 
@@ -742,10 +732,19 @@
                 
   
   
+    
   
   
-    <li class="md-nav__item">
-      <a href="../Logging/" class="md-nav__link">
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
         
   
   
@@ -761,6 +760,7 @@
   
 
       </a>
+      
     </li>
   
 
@@ -998,27 +998,23 @@
   
 
 
-<h1 id="state">State<a class="headerlink" href="#state" title="Permanent link">&para;</a></h1>
-<p>Lime supports storing and accessing state during a run.</p>
+<h1 id="logging">Logging<a class="headerlink" href="#logging" title="Permanent link">&para;</a></h1>
+<p>Lime supports logging output as your scripts are running.
+This can be useful for debugging and monitoring the progress of your scripts.</p>
+<p>To log output, use the <code>@effect log</code> node in your script. For example:</p>
+<div class="highlight"><pre><span></span><code>@effect log &quot;This is a log message.&quot;
+</code></pre></div>
+<p>Outputs:
+<div class="highlight"><pre><span></span><code>[<span class="nl">INFO</span>]: <span class="na">This is a log message.</span>
+</code></pre></div></p>
+<p>You can also include variables in your log messages. For example:</p>
 <div class="highlight"><pre><span></span><code>@state count = 0
 
-&lt;&lt; What is the count variable? &gt;&gt;
-
-@effect run
+@effect log &quot;The current count is ${count}.&quot;
 </code></pre></div>
-<p>The example above defines a state variable named <code>count</code>.</p>
-<p>To read a value from state, instruct the agent to "use the <code>count</code> variable" or "get count from shared state"; the system will return the current value. </p>
-<blockquote>
-<p>Note that language models can be nondeterministic, so the agent may not always call the state tool.</p>
-</blockquote>
-<p>You can also instruct the agent to set or update state values. For example, asking it to "set count to 5" or "update count to 10" will update the <code>count</code> variable in state (again, the agent may not always call the tool due to model nondeterminism).</p>
-<div class="highlight"><pre><span></span><code>@state count = 0
-
-&lt;&lt; Set the count variable to 5 &gt;&gt;
-
-@effect run
-</code></pre></div>
-<p>The example above sets the <code>count</code> variable to 5.</p>
+<p>Outputs:
+<div class="highlight"><pre><span></span><code>[<span class="nl">INFO</span>]: <span class="na">The current count is 0.</span>
+</code></pre></div></p>
 
 
 
@@ -1048,7 +1044,7 @@
       <nav class="md-footer__inner md-grid" aria-label="Footer" >
         
           
-          <a href="../Loops/" class="md-footer__link md-footer__link--prev" aria-label="Previous: Loops">
+          <a href="../Memory/" class="md-footer__link md-footer__link--prev" aria-label="Previous: Memory">
             <div class="md-footer__button md-icon">
               
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
@@ -1058,20 +1054,20 @@
                 Previous
               </span>
               <div class="md-ellipsis">
-                Loops
+                Memory
               </div>
             </div>
           </a>
         
         
           
-          <a href="../Conditionals/" class="md-footer__link md-footer__link--next" aria-label="Next: Conditionals">
+          <a href="../Function%20Calls/" class="md-footer__link md-footer__link--next" aria-label="Next: Function Calls">
             <div class="md-footer__title">
               <span class="md-footer__direction">
                 Next
               </span>
               <div class="md-ellipsis">
-                Conditionals
+                Function Calls
               </div>
             </div>
             <div class="md-footer__button md-icon">
