@@ -111,6 +111,7 @@ All plugins implement `AgentPlugin` interface:
 | `FuncPlugin`     | `func`    | Runs Python functions, stores results in state |
 | `ToolsPlugin`    | `tools`   | Registers tools for LLM to call                |
 | `ContextPlugin`  | `context` | Context operations (e.g., `clear`)             |
+| `InputPlugin`    | `input`   | Declares named inputs for .mgx workflows       |
 
 ### CopilotQuery (`src/libs/copilot/copilot_agent.py`)
 
@@ -122,6 +123,11 @@ GitHub Copilot integration:
 - Tracks token usage, costs, and run metrics
 
 ## .mgx File Syntax
+
+- See docs/inputplugin-effect-input.md for details on the `@effect input`
+  added by the InputPlugin. This page includes purpose, syntax, and
+  examples demonstrating minimal and advanced usage.
+
 
 ```mgx
 ---

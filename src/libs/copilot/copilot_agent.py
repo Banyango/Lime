@@ -2,7 +2,8 @@ from datetime import UTC, datetime
 
 from copilot import MessageOptions, SessionConfig, define_tool
 from copilot.generated.session_events import SessionEventType
-from copilot.types import InfiniteSessionConfig, SystemMessageAppendConfig, Tool, UserInputRequest, UserInputResponse
+from copilot.types import InfiniteSessionConfig, SystemMessageAppendConfig, Tool, UserInputRequest, UserInputResponse, \
+    PermissionHandler
 from wireup import injectable
 
 from core.agents.models import ExecutionModel, InputRequest
@@ -146,6 +147,7 @@ class CopilotQuery(QueryService):
                     reasoning_effort="low",
                     streaming=True,
                     on_user_input_request=on_user_input_request,
+                    on_permission_request=PermissionHandler.approve_all,
                     infinite_sessions=InfiniteSessionConfig(
                         enabled=True,
                     ),

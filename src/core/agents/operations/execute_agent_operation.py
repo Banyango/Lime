@@ -1,4 +1,5 @@
 import json
+import re
 from datetime import datetime
 from pathlib import Path
 from typing import Any
@@ -15,17 +16,21 @@ from margarita.parser import (
     Parser,
     StateNode,
     TextNode,
-    VariableNode,
+    VariableNode, MemoryNode,
 )
 
 from core.agents.models import BreakSignal, ExecutionModel, RunStatus
 from core.agents.plugins.import_plugin import ImportPlugin
+from core.agents.services.memory import MemoryService
 from core.interfaces.agent_plugin import AgentPlugin
 from core.interfaces.prompt_integrity import PromptIntegrity
 from entities.context import Context
 from entities.prompt_integrity import TRACKED_PROMPT_EXTENSIONS, PromptUnverifiedPathError
+from entities.run import ContentBlock, ContentBlockType
 
 EQUALITY_OR_LOGICAL_OPERATORS = ["==", "!=", ">", "<", ">=", "<=", " and ", " or ", " not ", " in ", " is "]
+
+
 
 
 class ExecuteAgentOperation:
@@ -34,16 +39,17 @@ class ExecuteAgentOperation:
     Responsibilities include parsing the Margarita AST, dispatching @effect
     tokens to plugins, managing execution state, and collecting run results.
     """
-
     def __init__(
-        self,
-        plugins: list[AgentPlugin],
-        execution_model: ExecutionModel,
-        prompt_integrity: PromptIntegrity | None = None,
-        allow_unverified: bool = False,
+            self,
+            plugins: list[AgentPlugin],
+            execution_model: ExecutionModel,
+            memory_service: MemoryService,
+            prompt_integrity: PromptIntegrity | None = None,
+            allow_unverified: bool = False,
     ):
         self.base_path = None
         self.plugins = plugins
+        self.memory_service = memory_service
         self.execution_model = execution_model
         self.prompt_integrity = prompt_integrity
         self.allow_unverified = allow_unverified
@@ -56,6 +62,8 @@ class ExecuteAgentOperation:
             base_path: Optional base directory path for resolving include statements
         """
         self.base_path = base_path or Path.cwd()
+
+        self.execution_model.memory = await self.memory_service.load_memory(self.execution_model.context)
 
         parser = Parser()
         metadata, nodes = parser.parse(mgx_file)
@@ -74,6 +82,9 @@ class ExecuteAgentOperation:
         )
 
         await self._process_nodes_async(nodes, self.execution_model.context)
+
+        # Save the memory at the end of execution
+        await self.memory_service.save_memory(self.execution_model.memory)
 
         # Mark the run as completed
         run.end_time = datetime.now()
@@ -110,6 +121,9 @@ class ExecuteAgentOperation:
                     await self._process_nodes_async(node.true_block, context)
                 elif node.false_block:
                     await self._process_nodes_async(node.false_block, context)
+
+            elif isinstance(node, MemoryNode):
+                await self._handle_memory_node_async(node.params)
 
             elif isinstance(node, BreakNode):
                 raise BreakSignal()
@@ -163,7 +177,11 @@ class ExecuteAgentOperation:
                 parser = Parser()
                 _, include_nodes = parser.parse(content)
 
-                scoped_context = Context(node.params)
+                resolved_params = {}
+                for k, v in node.params.items():
+                    resolved = context.get_variable_value(v)
+                    resolved_params[k] = resolved if resolved is not None else v
+                scoped_context = Context(resolved_params)
                 await self._process_nodes_async(include_nodes, scoped_context)
 
                 context.add_to_context_window(scoped_context.window)
@@ -182,9 +200,9 @@ class ExecuteAgentOperation:
         plugin = split[0] if len(split) >= 1 else None
         operation = split[1] if len(split) > 1 else None
 
-        await self.execute_plugin(plugin=plugin, operation=operation)
+        await self._execute_plugin(plugin=plugin, operation=operation)
 
-    async def execute_plugin(self, plugin: str, operation: str):
+    async def _execute_plugin(self, plugin: str, operation: str):
         """Execute a plugin operation.
 
         Args:
@@ -198,6 +216,35 @@ class ExecuteAgentOperation:
                     execution_model=self.execution_model,
                 )
                 break
+
+    async def _handle_memory_node_async(self, params: str):
+        params = params.strip()
+
+        if params == "clear":
+            self.memory_service.clear_memory(self.execution_model.memory)
+            self.execution_model.current_run.content_blocks.append(
+                ContentBlock(type=ContentBlockType.LOGGING, text="[Memory] Cleared all memory variables")
+            )
+            return
+
+        delete_match = re.match(r"^delete\s+(\w+)$", params)
+        if delete_match:
+            name = delete_match.group(1)
+
+            self.memory_service.delete_memory_variable(name, self.execution_model.memory)
+
+            self.execution_model.current_run.content_blocks.append(
+                ContentBlock(type=ContentBlockType.LOGGING, text=f"[Memory] Deleted '{name}'")
+            )
+            return
+
+        var_match = re.match(r"^var\s+(\w+)(?:\s*=\s*(.+))?$", params)
+        if var_match:
+            self.memory_service.add_memory_variable(value_group=var_match.group(2), name=var_match.group(1), memory=self.execution_model.memory)
+            self.execution_model.current_run.content_blocks.append(
+                ContentBlock(type=ContentBlockType.LOGGING, text=f"[Memory] Set variable '{var_match.group(1)}'")
+            )
+            return
 
     @staticmethod
     def _is_truthy(value: Any) -> bool:

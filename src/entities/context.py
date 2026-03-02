@@ -214,3 +214,12 @@ class Context:
             return str(val) if val is not None else ""
 
         return re.sub(pattern, repl, content)
+
+    def delete(self, name: str):
+        """Delete a variable from context.
+
+        Args:
+            name (str): The name of the variable to delete.
+        """
+        if name in self.data:
+            del self.data[name]

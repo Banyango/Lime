@@ -1,0 +1,14 @@
+---
+description: "Example demonstrating @effect input usage"
+---
+
+# Effect Input Example
+
+@effect input user_name = "TestUser"
+@effect input items = ["one", "two", "three"]
+
+<<
+Prompt: Hello ${user_name}, items: ${items}
+>>
+
+@effect run

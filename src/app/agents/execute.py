@@ -13,6 +13,7 @@ from core.agents.plugins.func import FuncPlugin
 from core.agents.plugins.input import InputPlugin
 from core.agents.plugins.run_agent import RunAgentPlugin
 from core.agents.plugins.tools import ToolsPlugin
+from core.agents.services.memory import MemoryService
 from core.interfaces.logger import LoggerService
 from core.interfaces.prompt_integrity import PromptIntegrity
 from core.interfaces.query_service import QueryService
@@ -47,6 +48,7 @@ async def execute(file_name: str, verify_prompts: bool | None, allow_unverified:
     ui = await container.get(UI)
     query_service = await container.get(QueryService)
     logger_service = await container.get(LoggerService)
+    memory_service = await container.get(MemoryService)
     prompt_integrity = None
 
     if should_verify_prompts:
@@ -80,6 +82,7 @@ async def execute(file_name: str, verify_prompts: bool | None, allow_unverified:
                 ConsoleLogPlugin(logger_service=logger_service),
                 InputPlugin(),
             ],
+            memory_service=memory_service,
             execution_model=model,
             prompt_integrity=prompt_integrity,
             allow_unverified=allow_unverified,

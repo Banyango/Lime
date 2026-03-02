@@ -6,6 +6,7 @@ from typing import Any
 
 from entities.context import Context
 from entities.function import FunctionCall
+from entities.memory import Memory
 from entities.run import Run, RunStatus
 
 
@@ -72,6 +73,7 @@ class ExecutionModel:
         self.warnings: list[str] = []
         self.metadata: dict[str, Any] = {}
         self.turns: list[Turn] = []
+        self.memory: Memory | None = None
         self.globals_dict: dict[str, Any] = globals()
 
     def start(self):

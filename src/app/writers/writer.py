@@ -62,6 +62,13 @@ class CliWriter(UI):
             renderables.append(Rule(style="dim cyan"))
             renderables.append(Text())
 
+        if model.memory:
+            renderables.append(Rule("Memory", style="dim magenta"))
+            for key, value in model.memory.items():
+                renderables.append(Text(f"{key}: {value}", style="dim"))
+            renderables.append(Rule(style="dim magenta"))
+            renderables.append(Text())
+
         last_index = len(model.turns) - 1
         for i, turn in enumerate(model.turns):
             is_last = i == last_index

@@ -383,7 +383,7 @@ async def test_execute_plugin_should_call_matching_plugin_when_plugin_matches():
     operation = _create_operation(plugins=[mock_plugin])
 
     # Act
-    await operation.execute_plugin(plugin="run", operation="execute")
+    await operation._execute_plugin(plugin="run", operation="execute")
 
     # Assert
     assert mock_plugin.handle_called is True
@@ -397,7 +397,7 @@ async def test_execute_plugin_should_not_call_plugin_when_no_match():
     operation = _create_operation(plugins=[mock_plugin])
 
     # Act
-    await operation.execute_plugin(plugin="other", operation="execute")
+    await operation._execute_plugin(plugin="other", operation="execute")
 
     # Assert
     assert mock_plugin.handle_called is False
@@ -710,3 +710,31 @@ def test_process_nodes_async_should_raise_unicode_decode_error_when_include_file
     # Assert
     with pytest.raises(UnicodeDecodeError):
         asyncio.run(sut._process_nodes_async([FakeIncludeNode("binary")]))
+
+
+def test_process_nodes_async_should_resolve_include_params_from_context_not_use_literal_variable_name(
+    monkeypatch, tmp_path
+):
+    # Arrange — include file uses ${input} which should receive the resolved value
+    include_file = tmp_path / "child.mg"
+    include_file.write_text("<<${input}>>")
+
+    # Only patch IncludeNode so isinstance checks use FakeIncludeNode;
+    # leave Parser unpatcheed so the real parser processes the include file.
+    monkeypatch.setattr(operation_module, "IncludeNode", FakeIncludeNode)
+
+    execution_model = _create_execution_model()
+    execution_model.context.set_variable("userInput", "a calculator app")
+
+    sut = ExecuteAgentOperation(plugins=[], execution_model=execution_model)
+    sut.base_path = tmp_path
+
+    include_node = FakeIncludeNode("child")
+    include_node.params = {"input": "userInput"}
+
+    # Act
+    asyncio.run(sut._process_nodes_async([include_node]))
+
+    # Assert — context window should contain the resolved value, not the literal "userInput"
+    assert "a calculator app" in execution_model.context.window
+    assert "userInput" not in execution_model.context.window
