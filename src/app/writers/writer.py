@@ -28,73 +28,8 @@ class CliWriter(UI):
         self.app_config = app_config
 
     async def render_ui(self, execution_model: ExecutionModel):
-        app = LimeApp(
-            build_display=lambda: self._build_display(execution_model),
-            execution_model=execution_model,
-            writer=self,
-        )
+        app = LimeApp(execution_model=execution_model, writer=self)
         await app.run_async()
-
-    def _build_display(self, model: ExecutionModel) -> Group:
-        renderables: list[Any] = [LOGO]
-        if model.import_errors:
-            renderables.append(Rule("Import Errors", style="red"))
-            for err in model.import_errors:
-                renderables.append(Text(str(err), style="red"))
-            renderables.append(Rule(style="red"))
-            renderables.append(Text())
-
-        if model.warnings:
-            renderables.append(Rule("Warnings", style="yellow"))
-            for warning in model.warnings:
-                renderables.append(Text(str(warning), style="yellow"))
-            renderables.append(Rule(style="yellow"))
-            renderables.append(Text())
-
-        if model.header:
-            renderables.append(Text(model.header, style="bold cyan"))
-            renderables.append(Text())
-
-        if model.metadata:
-            renderables.append(Rule("Metadata", style="dim cyan"))
-            for key, value in model.metadata.items():
-                renderables.append(Text(f"{key}: {value}", style="dim"))
-            renderables.append(Rule(style="dim cyan"))
-            renderables.append(Text())
-
-        if model.memory:
-            renderables.append(Rule("Memory", style="dim magenta"))
-            for key, value in model.memory.get_items():
-                renderables.append(Text(f"{key}: {value}", style="dim"))
-            renderables.append(Rule(style="dim magenta"))
-            renderables.append(Text())
-
-        last_index = len(model.turns) - 1
-        for i, turn in enumerate(model.turns):
-            is_last = i == last_index
-            if is_last:
-                renderables.extend(self._render_function_calls(turn.function_calls))
-
-            if turn.run:
-                if is_last:
-                    renderables.extend(self._render_run(turn.run, i + 1))
-                else:
-                    renderables.extend(self._render_run_summary(turn.run, i + 1))
-
-        # Check if there are any runs and if all are complete
-        has_runs = model.turns and any(t.run for t in model.turns)
-
-        if has_runs:
-            all_turns_complete = all(
-                t.run and t.run.status in (RunStatus.COMPLETED, RunStatus.ERROR) for t in model.turns if t.run
-            )
-
-            if all_turns_complete:
-                renderables.append(Text("All turns completed. (press q to quit)", style="bold green"))
-            else:
-                renderables.append(Text("Executing...", style="dim green"))
-
-        return Group(*renderables) if renderables else Group(Text("Waiting..."))
 
     def build_header(self, model: ExecutionModel) -> list:
         """Return renderables for the static header section (logo, errors, warnings, metadata)."""
@@ -124,9 +59,17 @@ class CliWriter(UI):
             renderables.append(Rule(style="dim cyan"))
             renderables.append(Text())
 
+        if model.memory:
+            renderables.append(Rule("Memory", style="dim magenta"))
+            for key, value in model.memory.get_items().items():
+                renderables.append(Text(f"{key}: {value}", style="dim"))
+            renderables.append(Rule(style="dim magenta"))
+            renderables.append(Text())
+
         return renderables
 
-    def _build_status(self, model: ExecutionModel) -> Text | None:
+    @staticmethod
+    def _build_status(model: ExecutionModel) -> Text | None:
         """Return a status Text for the footer line, or None when there are no runs."""
         has_runs = model.turns and any(t.run for t in model.turns)
         if not has_runs:
@@ -139,7 +82,7 @@ class CliWriter(UI):
             return Text("All turns completed. (press q to quit)", style="bold green")
         return Text("Executing...", style="dim green")
 
-    def _render_run(self, run: Run, index: int) -> list:
+    def render_run(self, run: Run, index: int) -> list:
         parts = []
 
         if self.app_config.show_context:
@@ -152,23 +95,11 @@ class CliWriter(UI):
         # Content blocks (interleaved chronologically)
         for block in run.content_blocks:
             if block.type == ContentBlockType.REASONING:
-                if not block.text:
-                    continue
-                condensed_reasoning = re.findall(r"\*\*(.+?)\*\*", block.text)
-                parts.append(
-                    Panel(
-                        Text(
-                            "\n".join(condensed_reasoning) if condensed_reasoning else block.text,
-                            style="dim",
-                        ),
-                        title="Reasoning",
-                        border_style="dim",
-                        expand=False,
-                    )
-                )
+                continue
             elif block.type == ContentBlockType.RESPONSE:
                 if not block.text:
                     continue
+                parts.append(Text("Response:", style="bold blue"))
                 try:
                     parts.append(Markdown(block.text))
                 except Exception:
@@ -193,7 +124,7 @@ class CliWriter(UI):
                     Text(err.message, style="red"),
                     title=f"Error{f' ({err.error_type})' if err.error_type else ''}",
                     border_style="red",
-                    expand=False,
+                    expand=True,
                 )
             )
 
@@ -226,64 +157,21 @@ class CliWriter(UI):
             changes_text.append(f"  -{cc.lines_removed}", style="red")
             parts.append(changes_text)
 
-        parts.append(Text())
-
-        # Run header
-        status_style = {
-            RunStatus.PENDING: "dim",
-            RunStatus.RUNNING: "bold yellow",
-            RunStatus.IDLE: "bold blue",
-            RunStatus.COMPLETED: "bold green",
-            RunStatus.ERROR: "bold red",
-        }.get(run.status if run else RunStatus.PENDING, "dim")
-
-        header = Text()
-        header.append(f"Run {index}", style="bold")
-        if run.model:
-            header.append(f"  {run.model}", style="dim")
-        header.append(f"  [{run.status.value}]", style=status_style)
-        if run.duration_ms is not None:
-            header.append(f"  {run.duration_ms / 1000:.1f}s", style="dim")
-        if run.event_name:
-            header.append(f"  {run.event_name.value}", style="dim")
-        parts.append(header)
-
         return parts
-
-    def _render_run_summary(self, run: Run, index: int) -> list:
-        """Return a compact one-line summary for a completed (non-active) turn."""
-        status_style = {
-            RunStatus.PENDING: "dim",
-            RunStatus.RUNNING: "bold yellow",
-            RunStatus.IDLE: "bold blue",
-            RunStatus.COMPLETED: "bold green",
-            RunStatus.ERROR: "bold red",
-        }.get(run.status, "dim")
-
-        header = Text()
-        header.append(f"Run {index}", style="bold")
-        if run.model:
-            header.append(f"  {run.model}", style="dim")
-        header.append(f"  [{run.status.value}]", style=status_style)
-        if run.duration_ms is not None:
-            header.append(f"  {run.duration_ms / 1000:.1f}s", style="dim")
-        if run.tokens.total_tokens > 0:
-            header.append(f"  {run.tokens.total_tokens:,} tokens", style="dim")
-        header.append("  (click to expand)", style="dim")
-
-        return [header, Text()]
 
     @staticmethod
     def _render_tool_call(tc: ToolCall) -> Panel:
         import json
 
-        tool_text = Text()
         if tc.success is None:
-            tool_text.append("~ ", style="yellow")
+            status_icon, status_style, border_style = "⌛", "yellow", "yellow dim"
         elif tc.success:
-            tool_text.append("+ ", style="green")
+            status_icon, status_style, border_style = "✔", "green", "green dim"
         else:
-            tool_text.append("x ", style="red")
+            status_icon, status_style, border_style = "✗", "red", "red dim"
+
+        tool_text = Text()
+        tool_text.append(f"{status_icon} ", style=status_style)
         tool_text.append(tc.tool_name, style="bold")
         if tc.duration_ms is not None:
             tool_text.append(f"  {tc.duration_ms:.0f}ms", style="dim")
@@ -300,23 +188,24 @@ class CliWriter(UI):
         if tc.result:
             tool_parts.append(Text(tc.result, style="dim"))
 
-        return Panel(Group(*tool_parts), border_style="dim", expand=False)
+        return Panel(Group(*tool_parts), border_style=border_style, expand=True, padding=(0, 1))
 
     @staticmethod
     def _render_input(tc: ContentBlock) -> Panel:
-        return Panel(Group(Markdown(tc.text)), border_style="dim", expand=False)
+        return Panel(Group(Markdown(tc.text)), border_style="dim", expand=True)
 
-    def _render_function_calls(self, function_calls: list[FunctionCall]) -> list:
+    def render_function_calls(self, function_calls: list[FunctionCall]) -> list:
         return [
             Panel(
                 Group(
-                    Text(fc.method, style="bold blue"),
+                    Text("❯  " + fc.method, style="bold cyan"),
                     Syntax(fc.params, "python", theme="monokai", line_numbers=False),
                     Text((fc.result or "")[0:150], style="dim"),
                 ),
-                title="Function Call",
-                border_style="blue",
-                expand=False,
+                title="fn",
+                border_style="cyan dim",
+                expand=True,
+                padding=(0, 1),
             )
             for fc in function_calls
         ]

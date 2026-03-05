@@ -1,0 +1,85 @@
+/* ── Global ─────────────────────────────────────────────────── */
+
+.block {
+    margin: 1 0 0 0;
+}
+
+VerticalScroll {
+    scrollbar-size: 1 1;
+}
+
+/* ── Layout regions ─────────────────────────────────────────── */
+
+#header-content {
+    height: auto;
+    padding: 1 1 0 1;
+}
+
+#runs-container {
+    height: auto;
+}
+
+#status-line {
+    height: 1;
+    padding: 0 1;
+    color: $text-muted;
+}
+
+/* ── RunWidget ──────────────────────────────────────────────── */
+
+RunWidget {
+    height: auto;
+    border-left: blank;
+}
+
+RunWidget.-expanded {
+    border-left: thick $primary 30%;
+}
+
+RunHeader {
+    height: auto;
+    padding: 0 1;
+    &:hover {
+        background: $panel;
+    }
+}
+
+RunWidget > #run-content {
+    display: none;
+    height: auto;
+    padding: 0 0 1 2;
+}
+
+RunWidget.-expanded > #run-content {
+    display: block;
+}
+
+/* ── InputOverlay ───────────────────────────────────────────── */
+
+InputOverlay {
+    height: auto;
+    display: none;
+    padding: 1 2;
+    border-top: solid $primary;
+    background: $surface;
+}
+
+#input-prompt {
+    height: auto;
+    padding: 0 0 1 0;
+    color: $primary;
+}
+
+/* ── Footer ─────────────────────────────────────────────────── */
+
+Footer {
+    background: transparent;
+    .footer-key--key {
+        background: transparent;
+        color: $text;
+    }
+    .footer-key--description {
+        color: $text-muted;
+        background: transparent;
+    }
+}
