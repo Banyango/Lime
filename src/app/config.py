@@ -8,6 +8,7 @@ from wireup import injectable
 
 class AppConfig(BaseModel):
     show_context: bool = True
+    theme: str = "textual-dark"
 
 
 def _default_settings_path() -> Path:
@@ -26,6 +27,13 @@ def _create_default_settings_file(path: Path) -> AppConfig:
     with path.open("w", encoding="utf-8") as f:
         json.dump(default_config.model_dump(), f, indent=4)
     return default_config
+
+
+def save_app_config(config: AppConfig) -> None:
+    path = _default_settings_path()
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with path.open("w", encoding="utf-8") as f:
+        json.dump(config.model_dump(), f, indent=4)
 
 
 @injectable

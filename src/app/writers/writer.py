@@ -59,7 +59,7 @@ class CliWriter(UI):
             renderables.append(Rule(style="dim cyan"))
             renderables.append(Text())
 
-        if model.memory:
+        if model.memory and model.memory.get_items():
             renderables.append(Rule("Memory", style="dim magenta"))
             for key, value in model.memory.get_items().items():
                 renderables.append(Text(f"{key}: {value}", style="dim"))
@@ -85,7 +85,7 @@ class CliWriter(UI):
     def render_run(self, run: Run, index: int) -> list:
         parts = []
 
-        if self.app_config.show_context:
+        if self.app_config.show_context and run.provider != "local":
             parts.append(Text("Prompt:", style="bold blue"))
             parts.append(Text(run.prompt, style="dim"))
 
@@ -113,9 +113,7 @@ class CliWriter(UI):
             elif block.type == ContentBlockType.LOGGING:
                 if not block.text:
                     continue
-                parts.append(
-                    Text(f"[INFO] {block.text}", style="cyan dim"),
-                )
+                parts.append(Text(f"[INFO] {block.text}", style="cyan dim"))
 
         # Errors
         for err in run.errors:

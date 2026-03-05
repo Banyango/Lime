@@ -20,7 +20,7 @@ class GithubCopilotClient:
 
     async def disconnect(self):
         if self.con:
-            await self.con.stop()
+            await self.con.force_stop()
 
     async def create_session(self, session_config: SessionConfig):
         if not self.con:

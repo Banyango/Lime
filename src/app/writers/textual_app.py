@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import sys
+from pathlib import Path
 from time import monotonic
 from typing import TYPE_CHECKING
 
@@ -123,6 +125,10 @@ class RunWidget(Vertical):
         yield RunHeader(id="run-header")
         yield Static(id="run-content")
 
+    def on_mount(self) -> None:
+        self._refresh_header()
+        self._refresh_content()
+
     # -- Reactive watcher ----------------------------------------------------
 
     def watch_expanded(self, _: bool) -> None:
@@ -205,7 +211,8 @@ class RunWidget(Vertical):
 class LimeApp(App):
     """Textual app for lime execution output."""
 
-    CSS_PATH = "lime.tcss"
+    CSS_PATH = Path(getattr(sys, "_MEIPASS", Path(__file__).parent)) / "app/writers/lime.tcss" \
+        if getattr(sys, "frozen", False) else Path(__file__).parent / "lime.tcss"
 
     BINDINGS = [
         Binding("q", "quit", "Quit"),
@@ -229,7 +236,13 @@ class LimeApp(App):
         yield Footer()
 
     def on_mount(self) -> None:
+        self.theme = self._writer.app_config.theme
         self.set_interval(0.12, self._poll)
+
+    def watch_theme(self, theme: str) -> None:
+        from app.config import save_app_config
+        self._writer.app_config.theme = theme
+        save_app_config(self._writer.app_config)
 
     # -- Poll loop -----------------------------------------------------------
 
