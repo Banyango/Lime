@@ -5,11 +5,13 @@ from click.testing import CliRunner
 
 import app.agents.execute as execute_module
 import app.lifecycle as lifecycle_module
+from core.agents.services.memory import MemoryService
 from core.interfaces.logger import LoggerService
 from core.interfaces.prompt_integrity import PromptIntegrity
 from core.interfaces.query_service import QueryService
 from core.interfaces.ui import UI
 from entities.context import Context
+from entities.memory import Memory
 from entities.prompt_integrity import (
     DEFAULT_PROMPT_MANIFEST_CONTENT,
     PROMPT_MANIFEST_FILE_NAME,
@@ -26,6 +28,14 @@ def _patch_lifecycle_with_noop(monkeypatch):
 
     monkeypatch.setattr(lifecycle_module, "startup", _noop)
     monkeypatch.setattr(lifecycle_module, "shutdown", _noop)
+
+
+class _FakeMemoryService(MemoryService):
+    async def save_memory(self, memory: Memory):
+        pass
+
+    async def load_memory(self, context: Context) -> Memory:
+        return Memory(context)
 
 
 def _patch_execute_container_get(monkeypatch, prompt_integrity=None):
@@ -46,6 +56,8 @@ def _patch_execute_container_get(monkeypatch, prompt_integrity=None):
             logger_service = MagicMock()
             logger_service.print = MagicMock()
             return logger_service
+        if interface is MemoryService:
+            return _FakeMemoryService()
         if interface is PromptIntegrity:
             if prompt_integrity is None:
                 raise AssertionError("PromptIntegrity was requested unexpectedly.")

@@ -51,7 +51,7 @@ def test_build_header_should_include_logo():
     model.start()
 
     # Act
-    parts = writer._build_header(model)
+    parts = writer.build_header(model)
 
     # Assert — first element is the LOGO
     from app.writers.writer import LOGO
@@ -67,7 +67,7 @@ def test_build_header_should_include_warnings():
     model.add_warning("something deprecated")
 
     # Act
-    parts = writer._build_header(model)
+    parts = writer.build_header(model)
 
     # Assert
     console = Console(file=io.StringIO(), highlight=False)
@@ -86,7 +86,7 @@ def test_build_header_should_include_metadata():
     model.metadata["version"] = "1.2.3"
 
     # Act
-    parts = writer._build_header(model)
+    parts = writer.build_header(model)
 
     # Assert
     console = Console(file=io.StringIO(), highlight=False)

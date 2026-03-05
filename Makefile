@@ -1,4 +1,4 @@
-.PHONY: help install test test-cov lint format format-check type-check check clean build docs docs-serve pre-commit-install pre-commit-run prompts-init prompts-lock prompts-check
+.PHONY: help install test test-cov lint format format-check type-check check clean build docs docs-serve pre-commit-install pre-commit-run prompts-init prompts-lock prompts-check run-executable
 
 LIME_CMD = uv run python src/main.py
 
@@ -77,3 +77,9 @@ build-bin:  ## Install lime executable to /usr/local/bin
 
 remove-bin:  ## Remove lime executable from /usr/local/bin
 	@sudo rm -f /usr/local/bin/lime
+
+run-executable:  ## Build the executable locally, install it to /usr/local/bin, and run it
+	uv run pyinstaller lime.spec
+	@sudo cp $(PWD)/dist/lime /usr/local/bin/lime
+	@sudo chmod +x /usr/local/bin/lime
+	lime

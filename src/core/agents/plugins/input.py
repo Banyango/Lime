@@ -28,6 +28,7 @@ class InputPlugin(AgentPlugin):
 
         execution_model.context.set_variable(variable_name, user_input)
 
-        execution_model.current_run.content_blocks.append(
-            ContentBlock(type=ContentBlockType.LOGGING, text=f"[Input] {prompt_text}: {user_input}")
-        )
+        if execution_model.current_run:
+            execution_model.current_run.content_blocks.append(
+                ContentBlock(type=ContentBlockType.LOGGING, text=f"[Input] {prompt_text}: {user_input}")
+            )

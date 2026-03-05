@@ -19,7 +19,7 @@ from entities.run import (
     RunStatus,
     ShutdownReason,
     TokenUsage,
-    ToolCall,
+    ToolCall, RunEventEnum,
 )
 from libs.copilot.client import GithubCopilotClient
 from libs.copilot.tools.get_variable_from_state import create_get_variable_tool
@@ -57,6 +57,14 @@ Examples:
 
 Always follow these rules for each run so the shared state remains accurate and consistent."""
 
+SESSION_EVENT_TYPE_MAP: dict[SessionEventType, RunEventEnum] = {
+    SessionEventType.SESSION_IDLE: RunEventEnum.THINKING,
+    SessionEventType.SESSION_START: RunEventEnum.RUNNING,
+    SessionEventType.ASSISTANT_REASONING_DELTA: RunEventEnum.REASONING,
+    SessionEventType.ASSISTANT_MESSAGE_DELTA: RunEventEnum.RESPONSE,
+    SessionEventType.TOOL_EXECUTION_START: RunEventEnum.FETCHING,
+    SessionEventType.TOOL_EXECUTION_COMPLETE: RunEventEnum.THINKING,
+}
 
 @injectable(as_type=QueryService)
 class CopilotQuery(QueryService):
@@ -188,7 +196,8 @@ class CopilotQuery(QueryService):
         def handle_event(event):
             d = event.data
 
-            execution_model.current_run.event_name = event.type.value
+            if event.type in SESSION_EVENT_TYPE_MAP:
+                execution_model.current_run.event_name = SESSION_EVENT_TYPE_MAP[event.type]
 
             if event.type == SessionEventType.SESSION_START:
                 run.session_id = d.session_id

@@ -19,28 +19,7 @@ if TYPE_CHECKING:
 
 
 class ExecutionWidget(Static):
-    """Widget that renders the Rich Group from _build_display().
-
-    Purpose
-    - Render the composed Rich Group produced by the provided build_display callable inside a Textual Static widget.
-
-    Public API
-    - __init__(build_display: Callable[[], Group]) -> None: Initialize with a callable that returns a Rich Group.
-    - on_mount() -> None: Mount hook that sets initial content.
-    - refresh_display() -> None: Re-render the widget content from the build_display callable.
-
-    Examples
-    ```python
-    def build_display() -> Group:
-        return Group()
-
-    widget = ExecutionWidget(build_display)
-    widget.refresh_display()
-    ```
-
-    Notes
-    - This widget delegates rendering to the provided callable and is intentionally lightweight.
-    """
+    """Widget that renders the Rich Group from _build_display()."""
 
     def __init__(self, build_display: Callable[[], Group]) -> None:
         super().__init__()
@@ -56,17 +35,7 @@ class ExecutionWidget(Static):
 
 
 class RunWidget(Static):
-    """Widget for a single run turn, supporting expand/collapse toggle on click.
-
-    Purpose
-    - Display one turn's run output, collapsed to a one-line summary by default
-      for completed (non-active) turns. Clicking toggles between summary and full view.
-
-    Public API
-    - __init__(run, index, writer, is_last) -> None
-    - on_click(event) -> None: Toggle expanded state.
-    - update_run(run, is_last, function_calls) -> None: Refresh run data and re-render.
-    """
+    """Widget for a single run turn, supporting expand/collapse toggle on click."""
 
     def __init__(self, run: Run, index: int, writer: CliWriter, is_last: bool = False) -> None:
         super().__init__()
@@ -105,29 +74,7 @@ class RunWidget(Static):
 
 
 class LimeApp(App):
-    """Textual app with a scrollable panel for lime execution output.
-
-    Purpose
-    - Provide a small Textual application UI that displays Lime execution output in a scrollable panel.
-
-    Public API
-    - __init__(build_display, execution_model, writer) -> None:
-        Configure UI with display builder, execution model, and optional writer for widget mode.
-    - compose() -> ComposeResult: Build the Textual layout.
-    - action_toggle_auto_scroll() -> None: Toggle automatic scrolling behavior.
-
-    Examples
-    ```python
-    app = LimeApp(build_display=my_builder, execution_model=my_model)
-    app.run()
-    ```
-
-    Notes
-    - When writer is provided, widget mode is used: each turn gets its own RunWidget that can be
-      clicked to toggle between summary and full view. Otherwise the legacy monolithic display is used.
-    - Auto-scroll is toggled off when the user navigates with keyboard keys; the polling interval is small for
-     near-real-time updates.
-    """
+    """Textual app with a scrollable panel for lime execution output."""
 
     CSS = """
     VerticalScroll {
@@ -230,12 +177,12 @@ class LimeApp(App):
 
         # Update header section
         header_widget = self.query_one("#header-content", Static)
-        header_widget.update(Group(*writer._build_header(model)))
+        header_widget.update(Group(*writer.build_header(model)))
 
         # Sync per-turn run widgets
         runs_container = self.query_one("#runs-container", Vertical)
-        last_index = len(model.turns) - 1
-        for i, turn in enumerate(model.turns):
+        last_index = len(model.turns_with_runs) - 1
+        for i, turn in enumerate(model.turns_with_runs):
             if turn.run is None:
                 continue
             is_last = i == last_index

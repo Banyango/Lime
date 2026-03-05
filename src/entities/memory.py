@@ -43,3 +43,8 @@ class Memory:
             key (str): The name of the memory variable to retrieve.
         """
         return self.context.get_variable_value(key)
+
+    def get_items(self) -> dict[str, Any]:
+        """Get all memory items as a dictionary."""
+        return self._memory
+

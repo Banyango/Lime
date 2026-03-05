@@ -85,6 +85,15 @@ class ModelUsage:
     tokens: TokenUsage = field(default_factory=TokenUsage)
 
 
+class RunEventEnum(Enum):
+    """Enumeration of significant events during a run that may be logged or emitted."""
+
+    THINKING = "thinking"
+    RUNNING = "running"
+    REASONING = "reasoning"
+    RESPONSE = "responding"
+    FETCHING = "fetching"
+
 @dataclass
 class ToolCall:
     """Record of an individual tool invocation during a run."""
@@ -178,4 +187,14 @@ class Run:
     result: str | None = None
 
     # DEBUG
-    event_name: str | None = None
+    event_name: RunEventEnum | None = None
+
+
+    def add_log(self, param: str):
+        """
+        Add a log entry to the run's content blocks with the given text.
+
+        Args:
+            param (str): The log message to add as a content block.
+        """
+        self.content_blocks.append(ContentBlock(type=ContentBlockType.LOGGING, text=param))

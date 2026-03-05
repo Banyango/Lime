@@ -106,6 +106,11 @@ class ExecutionModel:
         """Get the current turn in the execution model. None if there are no turns."""
         return self.turns[-1] if self.turns else None
 
+    @property
+    def turns_with_runs(self) -> list[Turn]:
+        """Get a list of all turns that have an associated run."""
+        return [turn for turn in self.turns if turn.run is not None]
+
     def start_run(self, prompt: str, provider: str, status: RunStatus, start_time: datetime) -> Run:
         """Start a new LLM Agent run with the given prompt, provider, status, and start time.
 
@@ -156,6 +161,16 @@ class ExecutionModel:
             warning (str): The warning message.
         """
         self.warnings.append(warning)
+
+    def add_log(self, param: str):
+        """
+        Add a log entry to the current run's content blocks with the given text.
+
+        Args:
+            param (str): The log message to add as a content block.
+        """
+        if self.current_run:
+            self.current_run.add_log(param)
 
 
 class BreakSignal(Exception):

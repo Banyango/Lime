@@ -131,14 +131,23 @@ class ExecuteAgentOperation:
             elif isinstance(node, ForNode):
                 items = context.get_variable_value(node.iterable)
                 if items:
-                    for item in items:
-                        context.add_to_state(node.iterator, item)
+                    if node.value_iterator is not None and isinstance(items, dict):
+                        pairs = list(items.items())
+                    else:
+                        pairs = [(item, None) for item in items]
+
+                    for key, val in pairs:
+                        context.add_to_state(node.iterator, key)
+                        if node.value_iterator is not None:
+                            context.add_to_state(node.value_iterator, val)
                         try:
                             await self._process_nodes_async(node.block, context)
                         except BreakSignal:
                             break
                         finally:
                             context.remove_from_state(node.iterator)
+                            if node.value_iterator is not None:
+                                context.remove_from_state(node.value_iterator)
 
             elif isinstance(node, StateNode):
                 variable = json.loads(node.initial_value)

@@ -64,7 +64,7 @@ class CliWriter(UI):
 
         if model.memory:
             renderables.append(Rule("Memory", style="dim magenta"))
-            for key, value in model.memory.items():
+            for key, value in model.memory.get_items():
                 renderables.append(Text(f"{key}: {value}", style="dim"))
             renderables.append(Rule(style="dim magenta"))
             renderables.append(Text())
@@ -96,7 +96,7 @@ class CliWriter(UI):
 
         return Group(*renderables) if renderables else Group(Text("Waiting..."))
 
-    def _build_header(self, model: ExecutionModel) -> list:
+    def build_header(self, model: ExecutionModel) -> list:
         """Return renderables for the static header section (logo, errors, warnings, metadata)."""
         renderables: list[Any] = [LOGO]
         if model.import_errors:
@@ -245,7 +245,7 @@ class CliWriter(UI):
         if run.duration_ms is not None:
             header.append(f"  {run.duration_ms / 1000:.1f}s", style="dim")
         if run.event_name:
-            header.append(f"  {run.event_name}", style="dim")
+            header.append(f"  {run.event_name.value}", style="dim")
         parts.append(header)
 
         return parts

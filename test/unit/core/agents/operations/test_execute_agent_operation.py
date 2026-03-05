@@ -6,8 +6,19 @@ import pytest
 from core.agents.models import ExecutionModel
 from core.agents.operations import execute_agent_operation as operation_module
 from core.agents.operations.execute_agent_operation import ExecuteAgentOperation
+from core.agents.services.memory import MemoryService
 from core.interfaces.agent_plugin import AgentPlugin
+from entities.context import Context
+from entities.memory import Memory
 from entities.prompt_integrity import PromptUnverifiedPathError
+
+
+class MockMemoryService(MemoryService):
+    async def save_memory(self, memory: Memory):
+        pass
+
+    async def load_memory(self, context: Context) -> Memory:
+        return Memory(context)
 
 
 class MockPlugin(AgentPlugin):
@@ -82,6 +93,7 @@ def _create_operation(
     operation = ExecuteAgentOperation(
         plugins=plugins,
         execution_model=execution_model,
+        memory_service=MockMemoryService(),
         prompt_integrity=prompt_integrity,
         allow_unverified=allow_unverified,
     )
@@ -578,6 +590,7 @@ def test_process_nodes_async_should_execute_false_block_when_if_condition_is_fal
     sut = ExecuteAgentOperation(
         plugins=[],
         execution_model=execution_model,
+        memory_service=MockMemoryService(),
     )
 
     if_node = FakeIfNode(
@@ -726,7 +739,7 @@ def test_process_nodes_async_should_resolve_include_params_from_context_not_use_
     execution_model = _create_execution_model()
     execution_model.context.set_variable("userInput", "a calculator app")
 
-    sut = ExecuteAgentOperation(plugins=[], execution_model=execution_model)
+    sut = ExecuteAgentOperation(plugins=[], execution_model=execution_model, memory_service=MockMemoryService())
     sut.base_path = tmp_path
 
     include_node = FakeIncludeNode("child")
@@ -738,3 +751,40 @@ def test_process_nodes_async_should_resolve_include_params_from_context_not_use_
     # Assert — context window should contain the resolved value, not the literal "userInput"
     assert "a calculator app" in execution_model.context.window
     assert "userInput" not in execution_model.context.window
+
+
+@pytest.mark.asyncio
+async def test_execute_async_should_process_for_loop_when_iterating_over_dict():
+    # Arrange
+    operation = _create_operation()
+    operation.execution_model.context.set_variable("person", {"name": "Alice", "role": "admin"})
+    mgx_content = """for key, value in person:
+    <<${key}: ${value}>>
+"""
+
+    # Act
+    await operation.execute_async(mgx_content)
+
+    # Assert
+    assert "name: Alice\n" in operation.execution_model.context.window
+    assert "role: admin\n" in operation.execution_model.context.window
+
+
+@pytest.mark.asyncio
+async def test_execute_async_should_process_for_loop_when_iterating_over_dict_with_break():
+    # Arrange
+    operation = _create_operation()
+    operation.execution_model.context.set_variable("data", {"a": 1, "b": 2, "c": 3})
+    mgx_content = """for key, value in data:
+    <<${key}: ${value}>>
+    if key == "b":
+        break
+"""
+
+    # Act
+    await operation.execute_async(mgx_content)
+
+    # Assert
+    assert "a: 1\n" in operation.execution_model.context.window
+    assert "b: 2\n" in operation.execution_model.context.window
+    assert "c: 3\n" not in operation.execution_model.context.window
