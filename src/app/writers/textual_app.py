@@ -237,7 +237,7 @@ class LimeApp(App):
 
     def on_mount(self) -> None:
         self.theme = self._writer.app_config.theme
-        self.set_interval(0.12, self._poll)
+        self.set_interval(0.016, self._poll)
 
     def watch_theme(self, theme: str) -> None:
         from app.config import save_app_config
