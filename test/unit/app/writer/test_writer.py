@@ -1,7 +1,6 @@
 import io
 
-from rich.console import Console
-from rich.text import Text
+from rich.console import Console, Group
 
 from app.config import AppConfig
 from app.writers.writer import CliWriter
@@ -34,10 +33,10 @@ def _create_execution_model_with_turns(count: int, status: RunStatus = RunStatus
     return model
 
 
-def _render_group_to_str(writer: CliWriter, model: ExecutionModel) -> str:
-    group = writer._build_display(model)
+def _render_parts_to_str(parts: list) -> str:
+    """Helper to render a list of Rich renderables to string."""
     console = Console(file=io.StringIO(), highlight=False)
-    console.print(group)
+    console.print(Group(*parts))
     return console.file.getvalue()
 
 
@@ -155,235 +154,170 @@ def test_build_status_should_return_completed_when_turns_have_error_status():
     assert "All turns completed" in result.plain
 
 
-# --- _render_run_summary ---
+# --- render_run ---
 
 
-def test_render_run_summary_should_include_run_index_and_status():
+def test_render_run_should_include_response_content():
     # Arrange
     writer = _create_writer()
-    run = _create_run(status=RunStatus.COMPLETED)
-
-    # Act
-    parts = writer._render_run_summary(run, index=3)
-
-    # Assert
-    assert len(parts) == 2
-    header = parts[0]
-    assert isinstance(header, Text)
-    rendered = header.plain
-    assert "Run 3" in rendered
-    assert "completed" in rendered
-
-
-def test_render_run_summary_should_include_model_and_duration_when_present():
-    # Arrange
-    writer = _create_writer()
-    run = _create_run()
-
-    # Act
-    parts = writer._render_run_summary(run, index=1)
-
-    # Assert
-    header = parts[0]
-    assert isinstance(header, Text)
-    rendered = header.plain
-    assert "gpt-4o" in rendered
-    assert "1.2s" in rendered
-
-
-def test_render_run_summary_should_include_token_count_when_nonzero():
-    # Arrange
-    writer = _create_writer()
-    run = _create_run()
-
-    # Act
-    parts = writer._render_run_summary(run, index=1)
-
-    # Assert
-    header = parts[0]
-    assert "150" in header.plain
-
-
-def test_render_run_summary_should_include_click_hint():
-    # Arrange
-    writer = _create_writer()
-    run = _create_run(status=RunStatus.COMPLETED)
-
-    # Act
-    parts = writer._render_run_summary(run, index=1)
-
-    # Assert
-    header = parts[0]
-    assert "click to expand" in header.plain
-
-
-def test_render_run_summary_should_omit_tokens_when_zero():
-    # Arrange
-    writer = _create_writer()
-    run = Run(status=RunStatus.COMPLETED, tool_calls=[], tokens=TokenUsage())
-
-    # Act
-    parts = writer._render_run_summary(run, index=1)
-
-    # Assert
-    header = parts[0]
-    assert "tokens" not in header.plain
-
-
-# --- _build_display turn rendering ---
-
-
-def test_build_display_should_render_full_run_when_it_is_the_last_turn():
-    # Arrange
-    writer = _create_writer()
-    model = ExecutionModel()
-    model.start()
-    model.start_turn()
     run = Run(
-        status=RunStatus.RUNNING,
+        status=RunStatus.COMPLETED,
         tool_calls=[],
         content_blocks=[ContentBlock(type=ContentBlockType.RESPONSE, text="Hello from the model")],
     )
-    model.turns[-1].run = run
 
     # Act
-    output = _render_group_to_str(writer, model)
+    parts = writer.render_run(run, index=1)
 
     # Assert
+    output = _render_parts_to_str(parts)
     assert "Hello from the model" in output
 
 
-def test_build_display_should_render_summary_only_when_turn_is_not_the_last():
+def test_render_run_should_skip_empty_response_blocks():
     # Arrange
     writer = _create_writer()
-    model = ExecutionModel()
-    model.start()
-    # First turn (completed, not last)
-    model.start_turn()
-    completed_run = Run(
+    run = Run(
         status=RunStatus.COMPLETED,
-        model="gpt-4o",
         tool_calls=[],
-        content_blocks=[ContentBlock(type=ContentBlockType.RESPONSE, text="Old response content")],
+        content_blocks=[
+            ContentBlock(type=ContentBlockType.RESPONSE, text=""),
+            ContentBlock(type=ContentBlockType.RESPONSE, text="Actual content"),
+        ],
     )
-    model.turns[-1].run = completed_run
-    # Second turn (active, last)
-    model.start_turn()
-    active_run = Run(
-        status=RunStatus.RUNNING,
+
+    # Act
+    parts = writer.render_run(run, index=1)
+
+    # Assert
+    output = _render_parts_to_str(parts)
+    assert "Actual content" in output
+
+
+def test_render_run_should_include_token_usage_when_completed():
+    # Arrange
+    writer = _create_writer()
+    run = Run(
+        status=RunStatus.COMPLETED,
         tool_calls=[],
-        content_blocks=[ContentBlock(type=ContentBlockType.RESPONSE, text="Current response")],
+        tokens=TokenUsage(input_tokens=100, output_tokens=50),
     )
-    model.turns[-1].run = active_run
 
     # Act
-    output = _render_group_to_str(writer, model)
-
-    # Assert — completed turn content is hidden, active turn content is shown
-    assert "Old response content" not in output
-    assert "Current response" in output
-    assert "completed" in output  # summary line still present
-
-
-def test_build_display_should_hide_function_calls_for_completed_turns():
-    # Arrange
-    writer = _create_writer()
-    model = ExecutionModel()
-    model.start()
-    # First turn with a function call (not last)
-    model.start_turn()
-    model.turns[-1].function_calls = [FunctionCall(method="my_func", params='{"x": 1}', result="42")]
-    model.turns[-1].run = _create_run(status=RunStatus.COMPLETED)
-    # Second (active) turn
-    model.start_turn()
-    model.turns[-1].run = _create_run(status=RunStatus.RUNNING)
-
-    # Act
-    output = _render_group_to_str(writer, model)
-
-    # Assert — function call from the old turn is not rendered
-    assert "my_func" not in output
-
-
-def test_build_display_should_show_function_calls_for_last_turn():
-    # Arrange
-    writer = _create_writer()
-    model = ExecutionModel()
-    model.start()
-    model.start_turn()
-    model.turns[-1].function_calls = [FunctionCall(method="active_func", params='{"y": 2}', result="99")]
-    model.turns[-1].run = _create_run(status=RunStatus.RUNNING)
-
-    # Act
-    output = _render_group_to_str(writer, model)
+    parts = writer.render_run(run, index=1)
 
     # Assert
-    assert "active_func" in output
+    output = _render_parts_to_str(parts)
+    assert "100" in output
+    assert "50" in output
 
 
-def test_build_display_should_show_executing_when_turns_are_running():
+def test_render_run_should_skip_reasoning_blocks():
     # Arrange
     writer = _create_writer()
-    model = ExecutionModel()
-    model.start()
-    model.start_turn()
-    model.turns[-1].run = _create_run(status=RunStatus.RUNNING)
+    run = Run(
+        status=RunStatus.COMPLETED,
+        tool_calls=[],
+        content_blocks=[
+            ContentBlock(type=ContentBlockType.REASONING, text="Internal reasoning"),
+            ContentBlock(type=ContentBlockType.RESPONSE, text="Public response"),
+        ],
+    )
 
     # Act
-    output = _render_group_to_str(writer, model)
+    parts = writer.render_run(run, index=1)
 
     # Assert
-    assert "Executing..." in output
-    assert "All turns completed" not in output
+    output = _render_parts_to_str(parts)
+    assert "Internal reasoning" not in output
+    assert "Public response" in output
 
 
-def test_build_display_should_show_completed_when_all_turns_are_done():
+def test_render_run_should_include_logging_blocks():
     # Arrange
     writer = _create_writer()
-    model = ExecutionModel()
-    model.start()
-    model.start_turn()
-    model.turns[-1].run = _create_run(status=RunStatus.COMPLETED)
+    run = Run(
+        status=RunStatus.COMPLETED,
+        tool_calls=[],
+        content_blocks=[ContentBlock(type=ContentBlockType.LOGGING, text="Log message")],
+    )
 
     # Act
-    output = _render_group_to_str(writer, model)
+    parts = writer.render_run(run, index=1)
 
     # Assert
-    assert "All turns completed" in output
-    assert "Executing..." not in output
+    output = _render_parts_to_str(parts)
+    assert "Log message" in output
 
 
-def test_build_display_should_show_completed_when_all_turns_have_completed_or_error_status():
+# --- render_function_calls ---
+
+
+def test_render_function_calls_should_include_method_name():
     # Arrange
     writer = _create_writer()
-    model = ExecutionModel()
-    model.start()
-    # First turn completed
-    model.start_turn()
-    model.turns[-1].run = _create_run(status=RunStatus.COMPLETED)
-    # Second turn has error
-    model.start_turn()
-    model.turns[-1].run = _create_run(status=RunStatus.ERROR)
+    function_calls = [FunctionCall(method="my_func", params='{"x": 1}', result="42")]
 
     # Act
-    output = _render_group_to_str(writer, model)
+    parts = writer.render_function_calls(function_calls)
 
     # Assert
-    assert "All turns completed" in output
-    assert "Executing..." not in output
+    output = _render_parts_to_str(parts)
+    assert "my_func" in output
 
 
-def test_build_display_should_not_show_execution_status_when_no_runs():
+def test_render_function_calls_should_include_params():
     # Arrange
     writer = _create_writer()
-    model = ExecutionModel()
-    model.start()
-    model.start_turn()
-    # Turn exists but has no run
+    function_calls = [FunctionCall(method="my_func", params='{"x": 1}', result="42")]
 
     # Act
-    output = _render_group_to_str(writer, model)
+    parts = writer.render_function_calls(function_calls)
 
     # Assert
-    assert "Executing..." not in output
-    assert "All turns completed" not in output
+    output = _render_parts_to_str(parts)
+    assert '"x": 1' in output
+
+
+def test_render_function_calls_should_include_result():
+    # Arrange
+    writer = _create_writer()
+    function_calls = [FunctionCall(method="my_func", params='{"x": 1}', result="Result value")]
+
+    # Act
+    parts = writer.render_function_calls(function_calls)
+
+    # Assert
+    output = _render_parts_to_str(parts)
+    assert "Result value" in output
+
+
+def test_render_function_calls_should_handle_empty_list():
+    # Arrange
+    writer = _create_writer()
+    function_calls = []
+
+    # Act
+    parts = writer.render_function_calls(function_calls)
+
+    # Assert
+    assert parts == []
+
+
+def test_render_function_calls_should_handle_multiple_calls():
+    # Arrange
+    writer = _create_writer()
+    function_calls = [
+        FunctionCall(method="func1", params='{"a": 1}', result="result1"),
+        FunctionCall(method="func2", params='{"b": 2}', result="result2"),
+    ]
+
+    # Act
+    parts = writer.render_function_calls(function_calls)
+
+    # Assert
+    output = _render_parts_to_str(parts)
+    assert "func1" in output
+    assert "func2" in output
+    assert "result1" in output
+    assert "result2" in output

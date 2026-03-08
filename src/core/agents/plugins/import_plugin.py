@@ -105,6 +105,7 @@ class ImportPlugin:
         tree = ast.parse(import_stmt)
 
         for node in tree.body:
+            module = None
             if isinstance(node, ast.Import):
                 for alias in node.names:
                     try:

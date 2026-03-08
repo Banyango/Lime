@@ -82,6 +82,7 @@ class InputOverlay(Vertical):
         self.query_one("#input-field", Input).clear()
 
 
+
 # ── RunHeader ─────────────────────────────────────────────────────────────────
 
 
@@ -343,3 +344,36 @@ class LimeApp(App):
     def on_key(self, event) -> None:
         if event.key in ("up", "down", "pageup", "pagedown", "home", "end"):
             self._auto_scroll = False
+        # Intercept Shift+Enter when input overlay is visible to insert a newline
+        try:
+            key = getattr(event, "key", None)
+            shift = getattr(event, "shift", False)
+        except Exception:
+            return
+
+        if key == "enter" and shift:
+            overlay = self.query_one("#input-overlay", InputOverlay)
+            if overlay.display:
+                event.stop()
+                inp = self.query_one("#input-field", Input)
+                current = getattr(inp, "value", "") or ""
+                # Try to obtain cursor position; fallback to appending at end
+                pos = getattr(inp, "cursor_position", None)
+                if pos is None:
+                    try:
+                        pos = inp._cursor_position  # private fallback
+                    except Exception:
+                        pos = len(current)
+                # Insert newline at cursor position
+                new_val = current[:pos] + "\n" + current[pos:]
+                inp.value = new_val
+                # Move cursor after inserted newline if supported
+                try:
+                    setattr(inp, "cursor_position", pos + 1)
+                except Exception:
+                    try:
+                        inp._cursor_position = pos + 1
+                    except Exception:
+                        pass
+                inp.focus()
+                return
