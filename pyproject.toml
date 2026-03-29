@@ -1,7 +1,7 @@
 [project]
 name = "lime-ai"
-version = "0.1.1"
-description = "Add your description here"
+version = "0.1.2"
+description = "Lime AI — An agentic markdown runner."
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [

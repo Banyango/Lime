@@ -4,19 +4,14 @@
 
 Run the following command to install Lime:
 
-Linux:
 ```sh
-curl -fsSL https://raw.githubusercontent.com/Banyango/lime/main/install-linux.sh | bash -s -- --option
+uvx lime-ai hello.mgx
 ```
 
-MacOS:
-```sh
-curl -fsSL https://raw.githubusercontent.com/Banyango/lime/main/install-macos.sh | bash -s -- --option
-```
+To install it as a persistent tool:
 
-Windows (PowerShell):
-```powershell
-iwr -useb https://raw.githubusercontent.com/Banyango/lime/main/install-windows.ps1 | iex
+```sh
+uv tool install lime-ai
 ```
 
 ## Copilot 

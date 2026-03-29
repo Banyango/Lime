@@ -13,9 +13,9 @@ Usage:
 
 import asyncio
 
-from app.container import container
-from core.interfaces.prompt_integrity import PromptIntegrity
-from entities.prompt_integrity import (
+from lime_ai.app.container import container
+from lime_ai.core.interfaces.prompt_integrity import PromptIntegrity
+from lime_ai.entities.prompt_integrity import (
     DEFAULT_PROMPT_MANIFEST_CONTENT,
     PROMPT_LOCK_FILE_NAME,
     PROMPT_MANIFEST_FILE_NAME,
