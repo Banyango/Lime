@@ -6,7 +6,7 @@ readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
     "anyio>=4.12.1",
-    "github-copilot-sdk>=0.1.29",
+    "github-copilot-sdk==0.1.29",
     "margarita>=0.3.8",
     "rich>=13.7.0",
     "textual>=0.80.0",
