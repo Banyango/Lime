@@ -1,3 +1,8 @@
+# Release Notes - Lime-AI v0.1.5
+
+- Fix broken copilot dependency
+
+
 # Release Notes - Lime-AI v0.1.4
 
 **Release Date:** March 28, 2026
