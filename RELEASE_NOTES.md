@@ -1,6 +1,14 @@
+# Release Notes - Lime-AI v0.1.6
+
+**Release Date:** March 28, 2026
+
+- Fix css script loading in production build.
+
 # Release Notes - Lime-AI v0.1.5
 
-- Fix broken copilot dependency
+**Release Date:** March 28, 2026
+ 
+- Fix broken copilot dependency.
 
 
 # Release Notes - Lime-AI v0.1.4

@@ -1,6 +1,6 @@
 [project]
 name = "lime-ai"
-version = "0.1.5"
+version = "0.1.6"
 description = "Lime AI — An agentic markdown runner."
 readme = "README.md"
 requires-python = ">=3.12"
@@ -14,7 +14,18 @@ dependencies = [
 ]
 
 [project.scripts]
-lime = "lime_ai.app.cli:cli"
+lime-ai = "lime_ai.app.cli:cli"
+
+[build-system]
+requires = ["setuptools>=68.0.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+packages = ["lime_ai"]
+package-dir = {"" = "src"}
+
+[tool.setuptools.package-data]
+lime_ai = ["app/writers/*.tcss"]
 
 [dependency-groups]
 dev = [
