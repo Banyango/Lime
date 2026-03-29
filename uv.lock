@@ -234,7 +234,7 @@ wheels = [
 
 [[package]]
 name = "lime-ai"
-version = "0.1.1"
+version = "0.1.2"
 source = { virtual = "." }
 dependencies = [
     { name = "anyio" },
@@ -263,7 +263,7 @@ docs = [
 requires-dist = [
     { name = "anyio", specifier = ">=4.12.1" },
     { name = "github-copilot-sdk", specifier = ">=0.1.29" },
-    { name = "margarita", specifier = ">=0.3.6" },
+    { name = "margarita", specifier = ">=0.3.8" },
     { name = "rich", specifier = ">=13.7.0" },
     { name = "textual", specifier = ">=0.80.0" },
     { name = "wireup", specifier = ">=2.6.0" },
@@ -322,15 +322,16 @@ wheels = [
 
 [[package]]
 name = "margarita"
-version = "0.3.7"
+version = "0.3.8"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "click" },
     { name = "loguru" },
+    { name = "pygments" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/31/41/41eb963f6f7e8a4f3a9fff9091632235d4974d6047348f31acb9234454e1/margarita-0.3.7.tar.gz", hash = "sha256:bcf11fc6ff6a6aba918dbbedf9013f16a64a8de63ef8c03094079fe884a5b83d", size = 745043, upload-time = "2026-03-02T02:26:24.669Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/2b/f9/a74d2c9ab119c029177b7d402f612b3d275d1e9ffa2eef2810a1e48d79f1/margarita-0.3.8.tar.gz", hash = "sha256:487125283eeb879527299612c0f7974682da36040894dc0f9916f9f3cb917738", size = 764316, upload-time = "2026-03-22T00:05:53.252Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/83/43/51603b71d29a046c32af3e8b8802076e796c52ddfda941ab6a01ba8afeae/margarita-0.3.7-py3-none-any.whl", hash = "sha256:82285c847fecfebd874987fc87c2fead3e2afbfd64283c0997df056cf46e1b9c", size = 14659, upload-time = "2026-03-02T02:26:23.421Z" },
+    { url = "https://files.pythonhosted.org/packages/5b/62/b235fe0c186d55d98faa5acea692a498adb63409e3de0441d7e6b50f71c2/margarita-0.3.8-py3-none-any.whl", hash = "sha256:113b6641e630b18dba7b73bdc157cb5f13e86fa0d161abceb8de4b9491411210", size = 20463, upload-time = "2026-03-22T00:05:54.429Z" },
 ]
 
 [[package]]
