@@ -604,6 +604,24 @@
         
       
       
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Loops
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
       <a href="./" class="md-nav__link md-nav__link--active">
         
   
@@ -620,6 +638,36 @@
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#dictionary-iteration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Dictionary Iteration
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
       
     </li>
   
@@ -980,6 +1028,25 @@
     
   
   
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#dictionary-iteration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Dictionary Iteration
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
 </nav>
                   </div>
                 </div>
@@ -1005,10 +1072,21 @@
 for i in items:
     &lt;&lt;Iteration ${i}&gt;&gt;
 </code></pre></div>
-<p>The prompt would be loaded with 
+<p>The prompt would be loaded with
 <div class="highlight"><pre><span></span><code>Iteration apple
 Iteration banana
 Iteration cherry
+</code></pre></div></p>
+<h2 id="dictionary-iteration">Dictionary Iteration<a class="headerlink" href="#dictionary-iteration" title="Permanent link">&para;</a></h2>
+<p>Use <code>for key, value in dict_var:</code> to iterate over both keys and values of a dictionary.</p>
+<div class="highlight"><pre><span></span><code>@state person = {&quot;name&quot;: &quot;Alice&quot;, &quot;role&quot;: &quot;admin&quot;}
+
+for key, value in person:
+    &lt;&lt;${key}: ${value}&gt;&gt;
+</code></pre></div>
+<p>The prompt would be loaded with
+<div class="highlight"><pre><span></span><code>name: Alice
+role: admin
 </code></pre></div></p>
 
 
