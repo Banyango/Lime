@@ -1,3 +1,9 @@
+# Release Notes - Lime-AI v0.1.8
+
+**Release Date:** March 28, 2026
+
+- Remove reasoning effort for now.
+
 # Release Notes - Lime-AI v0.1.7
 
 **Release Date:** March 28, 2026
