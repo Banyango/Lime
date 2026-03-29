@@ -1,3 +1,9 @@
+# Release Notes - Lime-AI v0.1.7
+
+**Release Date:** March 28, 2026
+
+- Fix the css script loading. 
+
 # Release Notes - Lime-AI v0.1.6
 
 **Release Date:** March 28, 2026
