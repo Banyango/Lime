@@ -1,6 +1,6 @@
 [project]
 name = "lime-ai"
-version = "0.1.3"
+version = "0.1.4"
 description = "Lime AI — An agentic markdown runner."
 readme = "README.md"
 requires-python = ">=3.12"
@@ -12,6 +12,9 @@ dependencies = [
     "textual>=0.80.0",
     "wireup>=2.6.0",
 ]
+
+[project.scripts]
+lime = "lime_ai.app.cli:cli"
 
 [dependency-groups]
 dev = [

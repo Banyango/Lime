@@ -1,3 +1,10 @@
+# Release Notes - Lime-AI v0.1.4
+
+**Release Date:** March 28, 2026
+
+- Fix issue with agent execution state not updating correctly in some cases.
+
+
 # Release Notes - Lime-AI v0.1.3
 
 **Release Date:** March 28, 2026
