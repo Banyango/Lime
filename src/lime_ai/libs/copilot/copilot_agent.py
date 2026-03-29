@@ -160,7 +160,6 @@ class CopilotQuery(QueryService):
                 session_config = SessionConfig(
                     system_message=SystemMessageAppendConfig(content=SYSTEM_PROMPT),
                     model=model_value or "gpt-5-mini",
-                    reasoning_effort="low",
                     streaming=True,
                     on_user_input_request=on_user_input_request,
                     on_permission_request=PermissionHandler.approve_all,
