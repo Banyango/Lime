@@ -149,6 +149,8 @@ class CopilotQuery(QueryService):
         # Build tool list for the session (set and get variable tools first)
         session_tools = [set_var_tool, get_var_tool] + extra_tools
 
+        extra_tool_names = [tool.name for tool in extra_tools]
+
         model_value = execution_model.model
         if isinstance(model_value, str):
             # Strip surrounding quotes if parser preserved them in front-matter
@@ -166,6 +168,7 @@ class CopilotQuery(QueryService):
                     infinite_sessions=InfiniteSessionConfig(
                         enabled=True,
                     ),
+                    available_tools=["*", "ask_user", "set_variable", "get_variable"] + extra_tool_names,
                     tools=session_tools,
                 )
             except TypeError:

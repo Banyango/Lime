@@ -134,10 +134,12 @@ class CliWriter(UI):
                 Text(f"{run.tokens.output_tokens:,} out", style="dim"),
             )
             if run.total_cost > 0:
-                usage.add_row(
-                    Text("Cost:", style="dim"),
-                    Text(f"${run.total_cost:.4f}", style="dim"),
-                )
+                # TODO: cost tracking is currently broken, hidden until fixed
+                # usage.add_row(
+                #     Text("Cost:", style="dim"),
+                #     Text(f"${run.total_cost:.4f}", style="dim"),
+                # )
+                pass
             if run.request_count > 0:
                 usage.add_row(
                     Text("Requests:", style="dim"),
