@@ -12,7 +12,8 @@ from copilot.types import (
 )
 from wireup import injectable
 
-from lime_ai.core.agents.models import ExecutionModel, InputRequest
+from lime_ai.app.config import AppConfig
+from lime_ai.core.agents.models import ExecutionModel, InputRequest, PermissionPrompt
 from lime_ai.core.interfaces.logger import LoggerService
 from lime_ai.core.interfaces.query_service import QueryService
 from lime_ai.entities.run import (
@@ -82,8 +83,9 @@ class CopilotQuery(QueryService):
     methods used by RunAgentPlugin to execute LLM queries.
     """
 
-    def __init__(self, copilot_client: GithubCopilotClient, logger: LoggerService | None = None):
+    def __init__(self, copilot_client: GithubCopilotClient, app_config: AppConfig, logger: LoggerService | None = None):
         self.client = copilot_client
+        self.app_config = app_config
         self.logger_service = logger
 
     async def execute_query(self, execution_model: ExecutionModel) -> str:
@@ -112,6 +114,21 @@ class CopilotQuery(QueryService):
             execution_model.pending_input = None
 
             return UserInputResponse(answer=user_input, wasFreeform=True)
+
+        _INTERNAL_TOOLS = {"get_variable", "set_variable"}
+
+        async def on_permission_request(request, properties):
+            if self.app_config.ignore_permissions:
+                return {"kind": "approved"}
+            if request.get("toolName") in _INTERNAL_TOOLS:
+                return {"kind": "approved"}
+            prompt = PermissionPrompt(kind=request.get("kind", "unknown"), details=dict(request))
+            execution_model.pending_permission = prompt
+            await prompt.event.wait()
+            execution_model.pending_permission = None
+            if prompt.approved:
+                return {"kind": "approved"}
+            return {"kind": "denied-interactively-by-user"}
 
         # Convert any internal Tool descriptors into Copilot SDK Tool objects.
         # We'll build a list of extra tools and pass them into the session.
@@ -164,11 +181,10 @@ class CopilotQuery(QueryService):
                     model=model_value or "gpt-5-mini",
                     streaming=True,
                     on_user_input_request=on_user_input_request,
-                    on_permission_request=PermissionHandler.approve_all,
+                    on_permission_request=on_permission_request,
                     infinite_sessions=InfiniteSessionConfig(
                         enabled=True,
                     ),
-                    available_tools=["*", "ask_user", "set_variable", "get_variable"] + extra_tool_names,
                     tools=session_tools,
                 )
             except TypeError:

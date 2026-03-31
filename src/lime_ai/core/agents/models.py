@@ -11,6 +11,21 @@ from lime_ai.entities.run import Run, RunStatus
 
 
 @dataclass
+class PermissionPrompt:
+    """A pending permission request posted by the Copilot agent and resolved by the UI.
+
+    The handler sets `pending_permission` on the ExecutionModel and awaits `event`.
+    The UI reads the kind/details, shows an approve/deny overlay, writes the user's
+    decision into `approved`, then calls `event.set()` to unblock the handler.
+    """
+
+    kind: str
+    details: dict
+    approved: bool | None = None
+    event: asyncio.Event = field(default_factory=asyncio.Event)
+
+
+@dataclass
 class InputRequest:
     """A pending request for user input posted by InputPlugin and resolved by the UI.
 
@@ -67,6 +82,7 @@ class ExecutionModel:
 
     def __init__(self):
         self.pending_input: InputRequest | None = None
+        self.pending_permission: PermissionPrompt | None = None
         self.header: str = ""
         self.context = Context()
         self.import_errors = []
@@ -78,7 +94,7 @@ class ExecutionModel:
 
     def start(self):
         """Initialize the execution model for a new agent execution."""
-        self.header = "Agent execution started."
+        self.header = ""
 
     def start_turn(self) -> Turn:
         """Start a new turn in the agent execution with the given run and context."""

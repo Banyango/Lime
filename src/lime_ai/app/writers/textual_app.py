@@ -18,7 +18,7 @@ from textual.message import Message
 from textual.reactive import var
 from textual.widgets import Footer, Header, Input, Static
 
-from lime_ai.core.agents.models import ExecutionModel
+from lime_ai.core.agents.models import ExecutionModel, PermissionPrompt
 from lime_ai.entities.run import ContentBlockType, RunStatus
 
 if TYPE_CHECKING:
@@ -80,6 +80,49 @@ class InputOverlay(Vertical):
         event.stop()
         self.post_message(self.Submitted(event.value))
         self.query_one("#input-field", Input).clear()
+
+
+# ── PermissionOverlay ────────────────────────────────────────────────────────
+
+
+class PermissionOverlay(Vertical):
+    """Approve/deny overlay shown when the Copilot agent requests a permission.
+
+    Posts PermissionOverlay.Resolved so the parent app can unblock the pending
+    PermissionPrompt without coupling this widget to the execution model.
+    """
+
+    _KIND_LABELS = {
+        "shell": "Shell command",
+        "write": "File write",
+        "read": "File read",
+        "url": "URL access",
+        "mcp": "MCP tool",
+        "custom-tool": "Custom tool",
+    }
+
+    class Resolved(Message):
+        def __init__(self, approved: bool) -> None:
+            super().__init__()
+            self.approved = approved
+
+    def compose(self) -> ComposeResult:
+        yield Static(id="perm-title")
+        yield Static(id="perm-details")
+        yield Static("  [bold green]a[/] Approve   [bold red]d[/] Deny", markup=True)
+
+    def show(self, prompt: PermissionPrompt) -> None:
+        self.display = True
+        label = self._KIND_LABELS.get(prompt.kind, prompt.kind)
+        self.query_one("#perm-title", Static).update(
+            Text.from_markup(f"[bold yellow]⚠  Permission request:[/]  {label}")
+        )
+        detail_parts = [f"{k}: {v}" for k, v in prompt.details.items() if k != "kind"]
+        details_text = "  " + "  ".join(detail_parts) if detail_parts else "  (no additional details)"
+        self.query_one("#perm-details", Static).update(details_text)
+
+    def hide(self) -> None:
+        self.display = False
 
 
 # ── RunHeader ─────────────────────────────────────────────────────────────────
@@ -220,6 +263,7 @@ class LimeApp(App):
     BINDINGS = [
         Binding("q", "quit", "Quit"),
         Binding("space", "toggle_auto_scroll", "Auto-scroll"),
+        Binding("p", "toggle_permissions", "Permissions"),
     ]
 
     def __init__(self, execution_model: ExecutionModel, writer: CliWriter) -> None:
@@ -235,6 +279,7 @@ class LimeApp(App):
             yield Static(id="header-content")
             yield Vertical(id="runs-container")
             yield Static(id="status-line")
+        yield PermissionOverlay(id="perm-overlay")
         yield InputOverlay(id="input-overlay")
         yield Footer()
 
@@ -255,6 +300,7 @@ class LimeApp(App):
         self._sync_header()
         self._sync_status()
         self._sync_input()
+        self._sync_permission()
         if self._auto_scroll:
             self.query_one("#scroll", VerticalScroll).scroll_end(animate=False)
 
@@ -289,6 +335,7 @@ class LimeApp(App):
 
         all_done = all(t.run and t.run.status in (RunStatus.COMPLETED, RunStatus.ERROR) for t in model.turns if t.run)
         if all_done:
+            self._auto_scroll = False
             t = Text()
             t.append("● ", style="bold green")
             t.append("All turns completed  ", style="dim")
@@ -325,7 +372,23 @@ class LimeApp(App):
         elif pending is None and overlay.display:
             overlay.hide()
 
+    def _sync_permission(self) -> None:
+        pending = self._model.pending_permission
+        overlay = self.query_one("#perm-overlay", PermissionOverlay)
+        if pending is not None and not overlay.display:
+            overlay.show(pending)
+        elif pending is None and overlay.display:
+            overlay.hide()
+
     # -- Message handlers ----------------------------------------------------
+
+    @on(PermissionOverlay.Resolved)
+    def _on_permission_resolved(self, event: PermissionOverlay.Resolved) -> None:
+        pending = self._model.pending_permission
+        if pending is None:
+            return
+        pending.approved = event.approved
+        pending.event.set()
 
     @on(InputOverlay.Submitted)
     def _on_input_submitted(self, event: InputOverlay.Submitted) -> None:
@@ -341,9 +404,28 @@ class LimeApp(App):
         self._auto_scroll = not self._auto_scroll
         self.notify(f"Auto-scroll {'on' if self._auto_scroll else 'off'}")
 
+    def action_toggle_permissions(self) -> None:
+        from lime_ai.app.config import save_app_config
+
+        config = self._writer.app_config
+        config.ignore_permissions = not config.ignore_permissions
+        save_app_config(config)
+        self.notify(f"Permission requests {'off' if config.ignore_permissions else 'on'}")
+
     def on_key(self, event) -> None:
         if event.key in ("up", "down", "pageup", "pagedown", "home", "end"):
             self._auto_scroll = False
+
+        perm_overlay = self.query_one("#perm-overlay", PermissionOverlay)
+        if perm_overlay.display:
+            if event.key == "a":
+                perm_overlay.post_message(PermissionOverlay.Resolved(approved=True))
+                event.stop()
+                return
+            elif event.key == "d":
+                perm_overlay.post_message(PermissionOverlay.Resolved(approved=False))
+                event.stop()
+                return
         # Intercept Shift+Enter when input overlay is visible to insert a newline
         try:
             key = getattr(event, "key", None)

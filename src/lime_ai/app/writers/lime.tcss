@@ -54,6 +54,28 @@ RunWidget.-expanded > #run-content {
     display: block;
 }
 
+/* ── PermissionOverlay ──────────────────────────────────────── */
+
+PermissionOverlay {
+    height: auto;
+    display: none;
+    padding: 1 2;
+    border-top: solid $warning;
+    background: $surface;
+}
+
+#perm-title {
+    height: auto;
+    padding: 0 0 0 0;
+    color: $warning;
+}
+
+#perm-details {
+    height: auto;
+    padding: 0 0 1 0;
+    color: $text-muted;
+}
+
 /* ── InputOverlay ───────────────────────────────────────────── */
 
 InputOverlay {

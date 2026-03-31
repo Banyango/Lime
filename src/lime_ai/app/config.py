@@ -9,6 +9,7 @@ from wireup import injectable
 class AppConfig(BaseModel):
     show_context: bool = True
     theme: str = "textual-dark"
+    ignore_permissions: bool = False
 
 
 def _default_settings_path() -> Path:
