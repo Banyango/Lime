@@ -163,6 +163,8 @@ class RunWidget(Vertical):
         self._run: Run | None = None
         self._function_calls: list[FunctionCall] = []
         self._user_toggled = False
+        self._header_fp: tuple | None = None
+        self._content_fp: tuple | None = None
 
     def compose(self) -> ComposeResult:
         yield RunHeader(id="run-header")
@@ -175,6 +177,7 @@ class RunWidget(Vertical):
     # -- Reactive watcher ----------------------------------------------------
 
     def watch_expanded(self, _: bool) -> None:
+        self._content_fp = None  # force re-render on expand/collapse
         self._refresh_header()
         self._refresh_content()
 
@@ -207,12 +210,16 @@ class RunWidget(Vertical):
     def _refresh_header(self) -> None:
         if self._run is None:
             return
+        run = self._run
+        fp = (run.status, run.duration_ms, run.tokens.total_tokens,
+              run.model, run.event_name, self.expanded)
+        if fp == self._header_fp:
+            return
+        self._header_fp = fp
         try:
             header = self.query_one("#run-header", RunHeader)
         except Exception:
             return
-
-        run = self._run
         chevron = "▼" if self.expanded else "▶"
         status_icon = _STATUS_ICON.get(run.status, "○")
         status_style = _STATUS_STYLE.get(run.status, "dim")
@@ -237,6 +244,13 @@ class RunWidget(Vertical):
     def _refresh_content(self) -> None:
         if self._run is None or not self.expanded:
             return
+        run = self._run
+        last_text_len = len(run.content_blocks[-1].text) if run.content_blocks else 0
+        fp = (len(run.content_blocks), len(run.tool_calls), run.status,
+              last_text_len, len(self._function_calls))
+        if fp == self._content_fp:
+            return
+        self._content_fp = fp
         try:
             content = self.query_one("#run-content", Static)
         except Exception:
@@ -272,6 +286,7 @@ class LimeApp(App):
         self._writer = writer
         self._auto_scroll = True
         self._run_widgets: dict[int, RunWidget] = {}
+        self._header_fp: tuple | None = None
 
     def compose(self) -> ComposeResult:
         yield Header(show_clock=True)
@@ -285,7 +300,7 @@ class LimeApp(App):
 
     def on_mount(self) -> None:
         self.theme = self._writer.app_config.theme
-        self.set_interval(0.016, self._poll)
+        self._poll_timer = self.set_interval(0.016, self._poll)
 
     def watch_theme(self, theme: str) -> None:
         from lime_ai.app.config import save_app_config
@@ -303,9 +318,22 @@ class LimeApp(App):
         self._sync_permission()
         if self._auto_scroll:
             self.query_one("#scroll", VerticalScroll).scroll_end(animate=False)
+        turns_with_runs = [t for t in self._model.turns if t.run]
+        if turns_with_runs and all(
+            t.run.status in (RunStatus.COMPLETED, RunStatus.ERROR)
+            for t in turns_with_runs
+        ):
+            self._poll_timer.stop()
 
     def _sync_header(self) -> None:
-        renderables = self._writer.build_header(self._model)
+        model = self._model
+        memory_len = len(model.memory.get_items()) if model.memory else 0
+        fp = (len(model.import_errors), len(model.warnings),
+              model.header, len(model.metadata), memory_len)
+        if fp == self._header_fp:
+            return
+        self._header_fp = fp
+        renderables = self._writer.build_header(model)
         self.query_one("#header-content", Static).update(Group(*renderables))
 
     async def _sync_runs(self) -> None:

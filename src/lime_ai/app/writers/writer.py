@@ -25,6 +25,7 @@ LOGO = Text.from_ansi(
 class CliWriter(UI):
     def __init__(self, app_config: AppConfig):
         self.app_config = app_config
+        self._tool_call_cache: dict[str, Any] = {}
 
     async def render_ui(self, execution_model: ExecutionModel):
         app = LimeApp(execution_model=execution_model, writer=self)
@@ -106,7 +107,7 @@ class CliWriter(UI):
             elif block.type == ContentBlockType.TOOL_CALL:
                 tc = tool_call_map.get(block.ref)
                 if tc:
-                    parts.append(self._render_tool_call(tc))
+                    parts.append(self._get_or_render_tool_call(tc))
             elif block.type == ContentBlockType.INPUT:
                 parts.append(self._render_input(block))
             elif block.type == ContentBlockType.LOGGING:
@@ -157,6 +158,16 @@ class CliWriter(UI):
             parts.append(changes_text)
 
         return parts
+
+    def _get_or_render_tool_call(self, tc: ToolCall) -> Panel:
+        if tc.success is not None:
+            cached = self._tool_call_cache.get(tc.tool_call_id)
+            if cached is not None:
+                return cached
+            rendered = self._render_tool_call(tc)
+            self._tool_call_cache[tc.tool_call_id] = rendered
+            return rendered
+        return self._render_tool_call(tc)
 
     @staticmethod
     def _render_tool_call(tc: ToolCall) -> Panel:
