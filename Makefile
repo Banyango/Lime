@@ -1,4 +1,4 @@
-.PHONY: help install test test-cov lint format format-check type-check check clean build docs docs-serve pre-commit-install pre-commit-run prompts-init prompts-lock prompts-check run-executable
+.PHONY: help install test test-cov lint format format-check type-check check clean build build-ui docs docs-serve pre-commit-install pre-commit-run prompts-init prompts-lock prompts-check run-executable
 
 LIME_CMD = uv run python src/main.py
 
@@ -44,7 +44,10 @@ clean:  ## Clean up build artifacts and cache files
 	find . -type f -name '*.pyc' -delete
 	find . -type f -name '*.pyo' -delete
 
-build:  ## Build the package
+build-ui:  ## Build the Ink UI bundle (requires Node.js + npm)
+	cd ui && npm install && npm run build
+
+build: build-ui  ## Build the package (includes UI bundle)
 	uv build
 
 build-exec:

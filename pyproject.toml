@@ -9,7 +9,6 @@ dependencies = [
     "github-copilot-sdk==0.1.29",
     "margarita>=0.3.8",
     "rich>=13.7.0",
-    "textual>=0.80.0",
     "wireup>=2.6.0",
 ]
 
@@ -24,7 +23,7 @@ build-backend = "setuptools.build_meta"
 where = ["src"]
 
 [tool.setuptools.package-data]
-"lime_ai.app.writers" = ["*.tcss"]
+"lime_ai.app.writers" = ["*.tcss", "ink_ui/*.js", "ink_ui/*.wasm", "ink_ui/package.json"]
 
 [dependency-groups]
 dev = [

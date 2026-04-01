@@ -94,5 +94,7 @@ async def execute(file_name: str, verify_prompts: bool | None, allow_unverified:
             await operation.execute_async(mgx_file=mgx_code, base_path=base_path)
         except (PromptIntegrityError, ValueError, FileNotFoundError) as error:
             raise click.ClickException(str(error)) from error
+        finally:
+            model.done = True
 
         await ui_task
