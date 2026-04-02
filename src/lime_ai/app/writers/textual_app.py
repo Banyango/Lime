@@ -318,11 +318,7 @@ class LimeApp(App):
         self._sync_permission()
         if self._auto_scroll:
             self.query_one("#scroll", VerticalScroll).scroll_end(animate=False)
-        turns_with_runs = [t for t in self._model.turns if t.run]
-        if turns_with_runs and all(
-            t.run.status in (RunStatus.COMPLETED, RunStatus.ERROR)
-            for t in turns_with_runs
-        ):
+        if self._model.done:
             self._poll_timer.stop()
 
     def _sync_header(self) -> None:

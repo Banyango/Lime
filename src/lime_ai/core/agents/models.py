@@ -91,6 +91,7 @@ class ExecutionModel:
         self.turns: list[Turn] = []
         self.memory: Memory | None = None
         self.globals_dict: dict[str, Any] = globals()
+        self.done: bool = False
 
     def start(self):
         """Initialize the execution model for a new agent execution."""

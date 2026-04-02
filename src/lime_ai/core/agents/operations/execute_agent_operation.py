@@ -103,6 +103,7 @@ class ExecuteAgentOperation:
         run.status = RunStatus.COMPLETED
         if run.start_time and run.end_time:
             run.duration_ms = (run.end_time - run.start_time).total_seconds() * 1000
+        self.execution_model.done = True
 
     async def _process_nodes_async(self, nodes: list[Node], context: Context | None = None):
         """Process a list of AST nodes, executing actions based on node type.
