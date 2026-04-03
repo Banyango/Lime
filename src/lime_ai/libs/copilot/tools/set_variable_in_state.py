@@ -20,7 +20,12 @@ async def create_set_variable_tool(execution_model: ExecutionModel):
         description="Set a variable in the shared state, for putting it in a var",
     )
     async def set_variable(params: SetVariableFromState) -> dict:
-        value = execution_model.context.set_variable(params.name, params.value)
+        memory = execution_model.memory
+        if memory is not None and params.name in memory.get_items():
+            memory.set(params.name, params.value)
+            value = execution_model.context.set_variable(params.name, params.value)
+        else:
+            value = execution_model.context.set_variable(params.name, params.value)
         return {"value": value}
 
     return set_variable
