@@ -84,6 +84,16 @@ else:
 
 Hopefully this gives you a taste of the possibilities with Lime!
 
+# Examples
+
+The `examples/` directory contains ready-to-run `.mgx` workflows you can use as a starting point:
+
+| Example          | Path                                 | Description                                              |
+|------------------|--------------------------------------|----------------------------------------------------------|
+| Hello World      | `examples/helloworld/helloworld.mgx` | Minimal workflow to get started                          |
+| Plan & Implement | `examples/plan-implement/pi.mgx`     | Plan then implement a feature in a loop                  |
+| Ralph            | `examples/ralph/custom-ralph.mgx`    | Multi-file workflow with custom tools and task breakdown |
+
 # Installation
 
 Run the following command for your platform to install Lime:
@@ -105,6 +115,8 @@ iwr -useb https://raw.githubusercontent.com/Banyango/lime/main/install-windows.p
 
 
 Logo Designed by Freepik
+
+Note: The CLI `execute` command supports a `--headless` flag which disables the textual UI and suppresses stdout/stderr output; in headless mode the process will exit with non-zero codes for missing files or when interactive input/permissions are required.
 
 ## Class documentation standard
 

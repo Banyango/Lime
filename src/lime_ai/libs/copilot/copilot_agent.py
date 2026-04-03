@@ -83,9 +83,10 @@ class CopilotQuery(QueryService):
     methods used by RunAgentPlugin to execute LLM queries.
     """
 
-    def __init__(self, copilot_client: GithubCopilotClient, app_config: AppConfig, logger: LoggerService | None = None):
+    def __init__(self, copilot_client: GithubCopilotClient, app_config: AppConfig | None = None, logger: LoggerService | None = None):
         self.client = copilot_client
-        self.app_config = app_config
+        # Allow omission in tests; default to a basic AppConfig when not provided.
+        self.app_config = app_config or AppConfig()
         self.logger_service = logger
 
     async def execute_query(self, execution_model: ExecutionModel) -> str:

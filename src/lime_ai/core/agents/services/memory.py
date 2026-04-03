@@ -22,7 +22,12 @@ class MemoryService(ABC):
         Args:
             value_group (str | None): The raw value string to parse and store. If None, will attempt to resolve from context using the same name.
             name (str): The name of the memory variable to set.
+            memory (Memory): The memory object to set.
         """
+        if name in memory.get_items():
+            # Already loaded from disk — preserve the saved value and ignore any explicit default.
+            return
+
         if value_group is None:
             # No explicit value provided; try to resolve from context using the same name
             value = memory.context.get_variable_value(name)

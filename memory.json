@@ -1,1 +1,201 @@
-{}
+{
+  "implementationPlan": {
+    "overview": "Add `--headless` boolean CLI option to the `execute` command so it disables the textual UI and suppresses all stdout/stderr output (process returns exit code only). Minimal change: update execute() to accept flag, conditionally skip starting ui.render_ui, and guard any direct prints and exception messages. Optional: add a HeadlessWriter implementing UI for DI completeness.",
+    "pitfalls": [
+      {
+        "avoidance": "Detect pending_input/pending_permission and fail with a clear non-printed exit code; or implement pre-seeded inputs or auto-approve behavior if desired.",
+        "issue": "Execution awaiting input/permission causing hang"
+      },
+      {
+        "avoidance": "Do not raise click.ClickException in headless; instead call sys.exit with appropriate code. Audit prints across codebase and guard with headless flag.",
+        "issue": "Click or Python printing errors to stderr despite headless"
+      },
+      {
+        "avoidance": "If skipping ui_task, ensure nothing else awaits ui_task; main flow should await operation.execute_async and consider awaiting model.done or ensuring operation sets model.done correctly.",
+        "issue": "Background UI tasks expecting to run may affect lifecycle"
+      },
+      {
+        "avoidance": "Prefer conditional skipping of ui_task to avoid container changes. Only implement HeadlessWriter if further extensibility needed.",
+        "issue": "DI changes complexity"
+      },
+      "deliverables_and_testing_steps':[{"
+    ],
+    "steps": [
+      {
+        "changes": "single-line addition of click.option decorator and function signature update.",
+        "description": "Modify src/lime_ai/app/agents/execute.py: add @click.option('--headless/--no-headless', default=False) and a headless parameter to execute(file_name, verify_prompts, allow_unverified, headless).",
+        "files": [
+          "src/lime_ai/app/agents/execute.py"
+        ],
+        "id": "add-cli-flag"
+      },
+      {
+        "changes": "wrap ui_task creation in if not headless.",
+        "description": "In execute(), after creating operation and before starting UI, branch on headless: if not headless start ui_task = asyncio.create_task(ui.render_ui(model)); if headless, do not start ui_task.",
+        "files": [
+          "src/lime_ai/app/agents/execute.py"
+        ],
+        "id": "conditional-ui-start"
+      },
+      {
+        "changes": "wrap the print at line showing \"File '...' does not exist.\" and any other print occurrences found across repo, or audit for prints and guard them.",
+        "description": "Replace direct prints and user-facing outputs with conditional checks `if not headless: print(...)` (e.g., file not found).",
+        "files": [
+          "src/lime_ai/app/agents/execute.py"
+        ],
+        "id": "suppress-direct-prints"
+      },
+      {
+        "changes": "adjust exception handling block to check headless before raising click.ClickException; call sys.exit(1) when headless.",
+        "description": "Catch user-visible exceptions at top-level in execute(), and in headless mode exit silently with sys.exit(1) or raise SystemExit without message; ensure no error text is printed by re-raising a silent SystemExit.",
+        "files": [
+          "src/lime_ai/app/agents/execute.py"
+        ],
+        "id": "handle-exceptions-silently"
+      },
+      {
+        "changes": "small check after operation.execute_async or add helper to detect pending prompts; minimal change preferred: after execute_async completes, if model.pending_input or pending_permission and headless, sys.exit(2).",
+        "description": "Ensure ExecuteAgentOperation either fails fast or is monitored: after operation.execute_async returns or at defined checkpoints, detect execution_model.pending_input or pending_permission; if present and headless, set model.done=True and exit non-zero. Alternatively implement a HeadlessWriter that auto-denies/auto-fails pending prompts.",
+        "files": [
+          "src/lime_ai/core/agents/operations/execute_agent_operation.py",
+          "src/lime_ai/app/writers/writer.py"
+        ],
+        "id": "prevent-hangs-for-inputs-and-permissions"
+      },
+      {
+        "changes": "new class implementing UI.render_ui and optional container registration logic.",
+        "description": "Create HeadlessWriter in src/lime_ai/app/writers/writer.py or new file implementing UI with render_ui that blocks until model.done but does not display UI. Register in DI container when headless is used (update container wiring).",
+        "files": [
+          "src/lime_ai/app/writers/writer.py",
+          "src/lime_ai/app/container.py"
+        ],
+        "id": "(optional) implement HeadlessWriter"
+      },
+      {
+        "changes": "create tests under test/ if needed; manual validation steps described.",
+        "description": "Add or run tests validating headless mode: ensure no stdout/stderr for successful run, non-zero exit for missing file and for input-required mgx. Use existing test harness (pytest) or manual uv run commands.",
+        "files": [],
+        "id": "tests"
+      },
+      {
+        "changes": "small doc addition or one-line CLI help update.",
+        "description": "Update README.md or CLI help text to mention --headless behaviour and limitations (no interactive prompts or permissions).",
+        "files": [
+          "README.md"
+        ],
+        "id": "docs"
+      }
+    ],
+    "title": "Implement --headless for execute command"
+  },
+  "request": "I want to build a headless mode where the cli terminal ui is not shown.",
+  "researchResults": {
+    "edge_cases": [
+      "Agent requests interactive input (pending_input) \u2014 in headless this will block; must decide behavior: fail with error, raise a specific exception, or supply inputs via API/config.",
+      "Permission prompts \u2014 headless cannot show overlays; decide default (deny, allow, or fail).",
+      "Plugins or code relying on UI side-effects (e.g., widgets that mutate state) \u2014 ensure skipping UI doesn't break plugin flows.",
+      "Exceptions and Click: click.ClickException and print() produce stderr/stdout; headless should avoid printing but still return non-zero exit code.",
+      "Long-running or background tasks started by UI code \u2014 ensure nothing depends on UI lifecycle to finish (ui_task awaiting)."
+    ],
+    "files_to_modify": [
+      {
+        "path": "src/lime_ai/app/agents/execute.py",
+        "reason": "Add --headless click option; when True do not start ui.render_ui task and avoid awaiting ui_task; suppress any prints and convert user-facing exceptions into silent exits."
+      },
+      {
+        "path": "src/lime_ai/app/writers/writer.py",
+        "reason": "Contains CliWriter implementing UI; consider adding HeadlessWriter class here or adapt existing writer to respect headless config (optional)."
+      },
+      {
+        "path": "src/lime_ai/app/writers/textual_app.py",
+        "reason": "Contains LimeApp and UI rendering/poll loop; no change required if execute() simply does not start the UI, but if a HeadlessWriter is used, no changes to this file needed."
+      },
+      {
+        "path": "src/lime_ai/core/interfaces/ui.py",
+        "reason": "Defines UI interface; HeadlessWriter must implement this."
+      },
+      {
+        "path": "src/lime_ai/app/container.py",
+        "reason": "Dependency injection may need optional registration for HeadlessWriter when headless flag present (optional; alternative: skip UI task entirely)."
+      },
+      {
+        "path": "src/lime_ai/app/cli.py",
+        "reason": "Top-level click group; may not need change, but document new flag usage in help/README."
+      },
+      {
+        "path": "src/lime_ai/app/writers/logger.py",
+        "reason": "Logger outputs to file; check for print statements elsewhere that could leak stdout/stderr; ensure FileLogger is used for logs instead of printing to console."
+      }
+    ],
+    "functions_to_modify": [
+      {
+        "file": "src/lime_ai/app/agents/execute.py",
+        "function": "execute",
+        "reason": "Add click.option('--headless/--no-headless') param, branch to skip ui task creation, and suppress user-facing prints/exceptions when headless."
+      },
+      {
+        "file": "src/lime_ai/app/writers/writer.py",
+        "function": "CliWriter.render_ui",
+        "reason": "Optional: make render_ui respect headless flag or create a HeadlessWriter.render_ui that returns immediately or awaits model.done without printing."
+      }
+    ],
+    "libraries_needed": [
+      "No new third-party libraries; reuse existing dependencies (click, textual, rich)."
+    ],
+    "new_functions": [
+      "HeadlessWriter.render_ui(execution_model) -> implementing UI that emits no output (could simply await model.done and return).",
+      "helper in execute: _exit_silently(code:int) -> perform silent exit without printing (careful with Click semantics)."
+    ],
+    "notes": "Minimal code changes recommended: change only src/lime_ai/app/agents/execute.py to add the flag and conditionally skip ui_task, plus small guards around print() and error handling. Optional enhancements: HeadlessWriter and container registration for cleaner DI and future expansion.",
+    "potential_pitfalls_and_mitigation": [
+      {
+        "mitigation": "Detect execution_model.pending_input or pending_permission and fail early with a clear non-printed exit code or provide an API to pre-seed inputs/auto-approve.",
+        "pitfall": "ExecutionModel awaiting input/permission will hang with no UI."
+      },
+      {
+        "mitigation": "In headless mode convert user-facing exceptions into SystemExit with no message or handle exceptions and call sys.exit(code) after suppressing output (test to ensure click runner doesn't print).",
+        "pitfall": "Click will display exception messages to stderr even if UI is suppressed."
+      },
+      {
+        "mitigation": "Search and audit code for print() calls (e.g., file existence message in execute) and wrap them to check headless flag before printing.",
+        "pitfall": "Other code prints directly to stdout (debug prints) bypassing writers."
+      },
+      {
+        "mitigation": "Prefer skipping ui_task in execute to avoid DI changes; alternatively register HeadlessWriter into container during startup when headless enabled.",
+        "pitfall": "DI container returns CliWriter by default; switching to HeadlessWriter may require container changes."
+      }
+    ],
+    "recommended_implementation_steps": [
+      {
+        "step": "Add option to execute(): @click.option('--headless/--no-headless', default=False) and accept headless param."
+      },
+      {
+        "step": "In execute(), after creating execution operation and before creating ui_task, branch: if headless: do not create ui_task and do not await it; else create ui_task as current behavior."
+      },
+      {
+        "step": "Suppress any direct prints when headless (e.g., file-not-found message): replace 'print(...)' with conditional: if not headless: print(...). For prompt/exception handling, in headless catch exceptions and call sys.exit(1) without printing."
+      },
+      {
+        "step": "(Optional) Implement HeadlessWriter class implementing UI.render_ui that awaits model.done (poll or await event) and returns; register it in container when headless is active if DI approach chosen."
+      },
+      {
+        "step": "Add unit/integration tests: run execute with --headless on a simple .mgx that completes normally, ensure no stdout/stderr, and exit code 0; test .mgx that requires input to ensure headless returns non-zero and does not hang."
+      },
+      {
+        "step": "Update README or CLI help to document --headless behavior, and mention that interactive prompts/permission requests are unsupported in headless mode."
+      }
+    ],
+    "summary": "Implement a --headless flag for the 'execute' command that disables the textual UI and suppresses all stdout/stderr output (only exit code returned). Two viable approaches: (A) conditionally skip starting the UI task in execute() and ensure no prints/exceptions produce output; (B) register a Headless UI implementation of UI that emits no output and ensures input/permission requests fail fast or are auto-handled. Recommend approach (A) + optional Headless UI for cleaner DI.",
+    "testing_and_validation": [
+      {
+        "test": "Run 'uv run python src/main.py execute sample.mgx --headless' on known-good mgx; assert no stdout/stderr and exit code 0."
+      },
+      {
+        "test": "Run execute with nonexistent file and --headless; assert no stdout/stderr and non-zero exit code."
+      },
+      {
+        "test": "Run an mgx that requests input and --headless; assert it exits non-zero rather than hanging."
+      }
+    ]
+  }
+}

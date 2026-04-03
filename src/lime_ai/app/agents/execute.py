@@ -1,5 +1,6 @@
 import asyncio
 from pathlib import Path
+import sys
 
 import click
 
@@ -29,8 +30,9 @@ from lime_ai.entities.prompt_integrity import (
 @click.argument("file_name", type=str)
 @click.option("--verify-prompts/--no-verify-prompts", default=None)
 @click.option("--allow-unverified", is_flag=True, default=False)
+@click.option("--headless/--no-headless", default=False)
 @with_lifecycle
-async def execute(file_name: str, verify_prompts: bool | None, allow_unverified: bool) -> None:
+async def execute(file_name: str, verify_prompts: bool | None, allow_unverified: bool, headless: bool) -> None:
     """Execute an .mgx file with optional prompt integrity verification.
 
     Args:
@@ -88,11 +90,20 @@ async def execute(file_name: str, verify_prompts: bool | None, allow_unverified:
             allow_unverified=allow_unverified,
         )
 
-        ui_task = asyncio.create_task(ui.render_ui(model))
+        ui_task = None
+        if not headless:
+            ui_task = asyncio.create_task(ui.render_ui(model))
 
         try:
             await operation.execute_async(mgx_file=mgx_code, base_path=base_path)
         except (PromptIntegrityError, ValueError, FileNotFoundError) as error:
             raise click.ClickException(str(error)) from error
 
-        await ui_task
+        # Prevent hanging in headless mode if the run requires user input or permission
+        if headless and (model.pending_input is not None or model.pending_permission is not None):
+            # mark done and exit with distinct code to indicate interactive prompt required
+            model.done = True
+            sys.exit(2)
+
+        if ui_task is not None:
+            await ui_task
