@@ -29,7 +29,7 @@ from lime_ai.entities.context import Context
 from lime_ai.entities.prompt_integrity import TRACKED_PROMPT_EXTENSIONS, PromptUnverifiedPathError
 from lime_ai.entities.run import ContentBlock, ContentBlockType
 
-EQUALITY_OR_LOGICAL_OPERATORS = ["==", "!=", ">", "<", ">=", "<=", " and ", " or ", " not ", " in ", " is "]
+EQUALITY_OR_LOGICAL_OPERATORS = ["==", "!=", ">", "<", ">=", "<=", " and ", " or ", " not ", " in ", " is ", "not "]
 
 
 class ExecuteAgentOperation:
