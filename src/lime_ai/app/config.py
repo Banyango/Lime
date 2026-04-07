@@ -9,6 +9,8 @@ from wireup import injectable
 class AppConfig(BaseModel):
     show_context: bool = True
     theme: str = "textual-dark"
+    use_existing_system_prompt: bool = True
+    system_prompt: str = ""
     ignore_permissions: bool = False
 
 

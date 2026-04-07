@@ -6,6 +6,7 @@ from copilot.types import (
     InfiniteSessionConfig,
     PermissionHandler,
     SystemMessageAppendConfig,
+    SystemMessageReplaceConfig,
     Tool,
     UserInputRequest,
     UserInputResponse,
@@ -173,6 +174,12 @@ class CopilotQuery(QueryService):
         if isinstance(model_value, str):
             # Strip surrounding quotes if parser preserved them in front-matter
             model_value = model_value.strip('"').strip("'")
+
+        system_message = SystemMessageAppendConfig(content=SYSTEM_PROMPT)
+        if not self.app_config.use_existing_system_prompt:
+            system_message = SystemMessageReplaceConfig(
+                content=self.app_config.system_prompt + SYSTEM_PROMPT,
+            )
 
         session_attr = getattr(self.client, "session", None)
         if not session_attr:
