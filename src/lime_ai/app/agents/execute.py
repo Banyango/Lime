@@ -1,6 +1,6 @@
 import asyncio
-from pathlib import Path
 import sys
+from pathlib import Path
 
 import click
 
@@ -10,11 +10,13 @@ from lime_ai.core.agents.models import ExecutionModel
 from lime_ai.core.agents.operations.execute_agent_operation import ExecuteAgentOperation
 from lime_ai.core.agents.plugins.console import ConsoleLogPlugin
 from lime_ai.core.agents.plugins.context import ContextPlugin
+from lime_ai.core.agents.plugins.exec import ExecPlugin
 from lime_ai.core.agents.plugins.func import FuncPlugin
 from lime_ai.core.agents.plugins.input import InputPlugin
 from lime_ai.core.agents.plugins.run_agent import RunAgentPlugin
 from lime_ai.core.agents.plugins.tools import ToolsPlugin
 from lime_ai.core.agents.services.memory import MemoryService
+from lime_ai.core.interfaces.agent_plugin import AgentPlugin
 from lime_ai.core.interfaces.logger import LoggerService
 from lime_ai.core.interfaces.prompt_integrity import PromptIntegrity
 from lime_ai.core.interfaces.query_service import QueryService
@@ -24,6 +26,31 @@ from lime_ai.entities.prompt_integrity import (
     PROMPT_MANIFEST_FILE_NAME,
     PromptIntegrityError,
 )
+
+
+def make_plugins(
+    query_service: QueryService,
+    logger_service: LoggerService,
+    memory_service: MemoryService,
+    prompt_integrity: PromptIntegrity | None,
+    allow_unverified: bool,
+) -> list[AgentPlugin]:
+    return [
+        RunAgentPlugin(agent_service=query_service),
+        FuncPlugin(),
+        ToolsPlugin(),
+        ContextPlugin(),
+        ConsoleLogPlugin(logger_service=logger_service),
+        InputPlugin(),
+        ExecPlugin(
+            plugin_factory=lambda: make_plugins(
+                query_service, logger_service, memory_service, prompt_integrity, allow_unverified
+            ),
+            memory_service=memory_service,
+            prompt_integrity=prompt_integrity,
+            allow_unverified=allow_unverified,
+        ),
+    ]
 
 
 @click.command()
@@ -40,6 +67,9 @@ async def execute(file_name: str, verify_prompts: bool | None, allow_unverified:
         verify_prompts: Explicitly enable/disable prompt verification.
         allow_unverified: If True, allow unverified includes with a warning.
     """
+    if not Path(file_name).is_file():
+        raise click.ClickException(f"File '{file_name}' does not exist.")
+
     base_path = Path(file_name).parent
     manifest_path = Path(PROMPT_MANIFEST_FILE_NAME)
     lock_path = Path(PROMPT_LOCK_FILE_NAME)
@@ -66,24 +96,13 @@ async def execute(file_name: str, verify_prompts: bool | None, allow_unverified:
         except PromptIntegrityError as error:
             raise click.ClickException(str(error)) from error
 
-    if not Path(file_name).is_file():
-        print(f"File '{file_name}' does not exist.")
-        return
-
     with open(file_name) as f:
         mgx_code = f.read()
 
         model = ExecutionModel()
 
         operation = ExecuteAgentOperation(
-            plugins=[
-                RunAgentPlugin(agent_service=query_service),
-                FuncPlugin(),
-                ToolsPlugin(),
-                ContextPlugin(),
-                ConsoleLogPlugin(logger_service=logger_service),
-                InputPlugin(),
-            ],
+            plugins=make_plugins(query_service, logger_service, memory_service, prompt_integrity, allow_unverified),
             memory_service=memory_service,
             execution_model=model,
             prompt_integrity=prompt_integrity,

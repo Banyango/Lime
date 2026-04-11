@@ -20,7 +20,7 @@ async def test_start_should_set_header_when_called():
     model.start()
 
     # Assert
-    assert model.header == "Agent execution started."
+    assert model.header == ""
 
 
 @pytest.mark.asyncio

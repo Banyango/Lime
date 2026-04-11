@@ -1,3 +1,4 @@
+import asyncio
 import json
 import re
 from datetime import datetime
@@ -6,6 +7,7 @@ from typing import Any
 
 from loguru import logger
 from margarita.parser import (
+    AllAwaitNode,
     BreakNode,
     EffectNode,
     ForNode,
@@ -74,6 +76,10 @@ class ExecuteAgentOperation:
             base_path: Optional base directory path for resolving include statements
         """
         self.base_path = base_path or Path.cwd()
+
+        for plugin in self.plugins:
+            if hasattr(plugin, "set_base_path"):
+                plugin.set_base_path(self.base_path)
 
         self.execution_model.memory = await self.memory_service.load_memory(self.execution_model.context)
 
@@ -209,6 +215,20 @@ class ExecuteAgentOperation:
 
                 context.add_to_context_window(scoped_context.window)
 
+            elif isinstance(node, AllAwaitNode):
+                self.execution_model.current_run.content_blocks.append(
+                    ContentBlock(type=ContentBlockType.AWAIT_ALL, text=f"[AwaitAll] processing children... {len(node.effect_nodes)} effect(s)")
+                )
+                results = await asyncio.gather(
+                    *[self._execute_effect_async(effect.raw_content) for effect in node.effect_nodes],
+                    return_exceptions=True,
+                )
+                for result in results:
+                    if isinstance(result, BaseException):
+                        self.execution_model.current_run.content_blocks.append(
+                            ContentBlock(type=ContentBlockType.LOGGING, text=f"[AwaitAll] Child failed: {result}")
+                        )
+
             elif isinstance(node, EffectNode):
                 await self._execute_effect_async(node.raw_content)
 
@@ -291,7 +311,8 @@ class ExecuteAgentOperation:
             return value != 0
         return True
 
-    def _evaluate_condition(self, condition: str, context: Context) -> Any:
+    @staticmethod
+    def _evaluate_condition(condition: str, context: Context) -> Any:
         """Evaluate a condition, which can be a simple variable or a Python expression.
 
         Args:
@@ -315,7 +336,8 @@ class ExecuteAgentOperation:
 
         return result
 
-    def _normalize_include_path(self, template_name: str) -> str:
+    @staticmethod
+    def _normalize_include_path(template_name: str) -> str:
         """Normalize the include path.
 
         Args:

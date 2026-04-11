@@ -17,6 +17,7 @@ class ContentBlockType(Enum):
     TOOL_CALL = "tool_call"
     INPUT = "input"
     LOGGING = "logging"
+    AWAIT_ALL = "await_all"
     OTHER = "other"
 
 
@@ -187,8 +188,23 @@ class Run:
     # Result of the run
     result: str | None = None
 
+    # Display label (e.g. "exec: helpers/summarize.mgx" for sub-executions)
+    title: str = ""
+
+    # True when this run belongs to a sub-execution (@effect exec)
+    is_sub_run: bool = False
+    is_expanded: bool = True
+    is_user_toggled: bool = False
+
     # DEBUG
     event_name: RunEventEnum | None = None
+
+    def on_expanded(self) -> None:
+        self.is_user_toggled = True
+        self.is_expanded = not self.is_expanded
+
+    def on_complete(self):
+        self.is_expanded = False
 
     def add_log(self, param: str):
         """

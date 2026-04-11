@@ -788,3 +788,105 @@ async def test_execute_async_should_process_for_loop_when_iterating_over_dict_wi
     assert "a: 1\n" in operation.execution_model.context.window
     assert "b: 2\n" in operation.execution_model.context.window
     assert "c: 3\n" not in operation.execution_model.context.window
+
+
+@pytest.mark.asyncio
+async def test_execute_async_should_run_all_effects_in_parallel_when_await_all():
+    # Arrange
+    call_order = []
+
+    class TrackingPlugin(AgentPlugin):
+        def __init__(self, token: str):
+            self.token = token
+
+        def is_match(self, t: str) -> bool:
+            return t == self.token
+
+        async def handle(self, params: str, execution_model: ExecutionModel):
+            call_order.append(self.token)
+
+    plugin_a = TrackingPlugin("alpha")
+    plugin_b = TrackingPlugin("beta")
+    operation = _create_operation(plugins=[plugin_a, plugin_b])
+    mgx_content = """@await-all
+    @effect alpha
+    @effect beta
+"""
+
+    # Act
+    await operation.execute_async(mgx_content)
+
+    # Assert — both effects were called
+    assert "alpha" in call_order
+    assert "beta" in call_order
+
+
+@pytest.mark.asyncio
+async def test_await_all_partial_failure_logs_error_and_keeps_successful_outputs():
+    # Arrange
+    results = []
+
+    class SuccessPlugin(AgentPlugin):
+        def is_match(self, t: str) -> bool:
+            return t == "good"
+
+        async def handle(self, params: str, execution_model: ExecutionModel):
+            results.append("good")
+            execution_model.context.set_variable("goodResult", "ok")
+
+    class FailPlugin(AgentPlugin):
+        def is_match(self, t: str) -> bool:
+            return t == "bad"
+
+        async def handle(self, params: str, execution_model: ExecutionModel):
+            raise RuntimeError("child exploded")
+
+    operation = _create_operation(plugins=[SuccessPlugin(), FailPlugin()])
+    mgx_content = """@await-all
+    @effect good
+    @effect bad
+"""
+
+    # Act
+    await operation.execute_async(mgx_content)
+
+    # Assert — successful sibling ran
+    assert "good" in results
+    # Assert — failure was logged as a content block (not re-raised)
+    log_texts = [
+        cb.text for cb in operation.execution_model.current_run.content_blocks if "[AwaitAll]" in (cb.text or "")
+    ]
+    assert any("child exploded" in t for t in log_texts)
+    # Assert — successful output is still present
+    assert operation.execution_model.context.get_variable_value("goodResult") == "ok"
+
+
+@pytest.mark.asyncio
+async def test_execute_async_should_call_all_await_all_effects_regardless_of_order():
+    # Arrange
+    handled = []
+
+    class CollectingPlugin(AgentPlugin):
+        def __init__(self, token: str):
+            self.token = token
+
+        def is_match(self, t: str) -> bool:
+            return t == self.token
+
+        async def handle(self, params: str, execution_model: ExecutionModel):
+            handled.append((self.token, params))
+
+    plugin_x = CollectingPlugin("x")
+    plugin_y = CollectingPlugin("y")
+    operation = _create_operation(plugins=[plugin_x, plugin_y])
+    mgx_content = """@await-all
+    @effect x foo
+    @effect y bar
+"""
+
+    # Act
+    await operation.execute_async(mgx_content)
+
+    # Assert
+    assert ("x", "foo") in handled
+    assert ("y", "bar") in handled

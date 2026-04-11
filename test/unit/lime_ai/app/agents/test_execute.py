@@ -5,6 +5,7 @@ from click.testing import CliRunner
 
 import lime_ai.app.agents.execute as execute_module
 import lime_ai.app.lifecycle as lifecycle_module
+from lime_ai.app.config import AppConfig
 from lime_ai.core.agents.services.memory import MemoryService
 from lime_ai.core.interfaces.logger import LoggerService
 from lime_ai.core.interfaces.prompt_integrity import PromptIntegrity
@@ -44,8 +45,10 @@ def _patch_execute_container_get(monkeypatch, prompt_integrity=None):
     ui = MagicMock(spec=UI)
     query_service = AsyncMock(spec=QueryService)
 
-    async def _fake_get(interface):
+    async def _fake_get(interface, **kwargs):
         requested_interfaces.append(interface)
+        if interface is AppConfig:
+            return AppConfig()
         if interface is UI:
             return ui
         if interface is Context:

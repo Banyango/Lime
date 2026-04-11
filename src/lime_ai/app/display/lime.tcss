@@ -36,6 +36,17 @@ RunWidget.-expanded {
     border-left: thick $primary 30%;
 }
 
+RunWidget.-sub-run {
+    margin: 0 0 0 4;
+}
+
+RunWidget.-sub-run.-sub-color-0.-expanded { border-left: thick #00d7ff 70%; }
+RunWidget.-sub-run.-sub-color-1.-expanded { border-left: thick #ff5fff 70%; }
+RunWidget.-sub-run.-sub-color-2.-expanded { border-left: thick #ffd700 70%; }
+RunWidget.-sub-run.-sub-color-3.-expanded { border-left: thick #87ff00 70%; }
+RunWidget.-sub-run.-sub-color-4.-expanded { border-left: thick #ff8700 70%; }
+RunWidget.-sub-run.-sub-color-5.-expanded { border-left: thick #af87ff 70%; }
+
 RunHeader {
     height: auto;
     padding: 0 1;

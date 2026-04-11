@@ -4,7 +4,6 @@ from copilot import MessageOptions, SessionConfig, define_tool
 from copilot.generated.session_events import SessionEventType
 from copilot.types import (
     InfiniteSessionConfig,
-    PermissionHandler,
     SystemMessageAppendConfig,
     SystemMessageReplaceConfig,
     Tool,
@@ -84,7 +83,12 @@ class CopilotQuery(QueryService):
     methods used by RunAgentPlugin to execute LLM queries.
     """
 
-    def __init__(self, copilot_client: GithubCopilotClient, app_config: AppConfig | None = None, logger: LoggerService | None = None):
+    def __init__(
+        self,
+        copilot_client: GithubCopilotClient,
+        app_config: AppConfig | None = None,
+        logger: LoggerService | None = None,
+    ):
         self.client = copilot_client
         # Allow omission in tests; default to a basic AppConfig when not provided.
         self.app_config = app_config or AppConfig()
@@ -110,10 +114,8 @@ class CopilotQuery(QueryService):
                 properties (dict[str, str]): Additional properties related to the request.
             """
             request = InputRequest(prompt=request["question"])
-            execution_model.pending_input = request
-            await request.event.wait()
+            await execution_model.request_input(request)
             user_input = request.response or ""
-            execution_model.pending_input = None
 
             return UserInputResponse(answer=user_input, wasFreeform=True)
 
@@ -125,9 +127,7 @@ class CopilotQuery(QueryService):
             if request.get("toolName") in _INTERNAL_TOOLS:
                 return {"kind": "approved"}
             prompt = PermissionPrompt(kind=request.get("kind", "unknown"), details=dict(request))
-            execution_model.pending_permission = prompt
-            await prompt.event.wait()
-            execution_model.pending_permission = None
+            await execution_model.request_permission(prompt)
             if prompt.approved:
                 return {"kind": "approved"}
             return {"kind": "denied-interactively-by-user"}
@@ -168,8 +168,6 @@ class CopilotQuery(QueryService):
         # Build tool list for the session (set and get variable tools first)
         session_tools = [set_var_tool, get_var_tool] + extra_tools
 
-        extra_tool_names = [tool.name for tool in extra_tools]
-
         model_value = execution_model.model
         if isinstance(model_value, str):
             # Strip surrounding quotes if parser preserved them in front-matter
@@ -178,6 +176,7 @@ class CopilotQuery(QueryService):
         system_message = SystemMessageAppendConfig(content=SYSTEM_PROMPT)
         if not self.app_config.use_existing_system_prompt:
             system_message = SystemMessageReplaceConfig(
+                mode="replace",
                 content=self.app_config.system_prompt + SYSTEM_PROMPT,
             )
 
@@ -185,7 +184,7 @@ class CopilotQuery(QueryService):
         if not session_attr:
             try:
                 session_config = SessionConfig(
-                    system_message=SystemMessageAppendConfig(content=SYSTEM_PROMPT),
+                    system_message=system_message,
                     model=model_value or "gpt-5-mini",
                     streaming=True,
                     on_user_input_request=on_user_input_request,
@@ -373,7 +372,7 @@ class CopilotQuery(QueryService):
             elif event.type == SessionEventType.SESSION_IDLE:
                 pass
 
-        self.client.session.on(handle_event)
+        unsubscribe = self.client.session.on(handle_event)
 
         response = await self.client.session.send_and_wait(
             MessageOptions(prompt=execution_model.context.window), timeout=300
@@ -394,6 +393,8 @@ class CopilotQuery(QueryService):
             )
 
         execution_model.current_run.result = response.data.content if response else None
+
+        unsubscribe()
 
         return response.data.content
 

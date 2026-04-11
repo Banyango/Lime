@@ -21,10 +21,8 @@ class InputPlugin(AgentPlugin):
 
         # Post a request for the UI to handle, then wait until it is resolved.
         request = InputRequest(prompt=prompt_text)
-        execution_model.pending_input = request
-        await request.event.wait()
+        await execution_model.request_input(request)
         user_input = request.response or ""
-        execution_model.pending_input = None
 
         execution_model.context.set_variable(variable_name, user_input)
 

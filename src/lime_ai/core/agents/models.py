@@ -23,6 +23,8 @@ class PermissionPrompt:
     details: dict
     approved: bool | None = None
     event: asyncio.Event = field(default_factory=asyncio.Event)
+    source: str = ""
+    color_hex: str = ""
 
 
 @dataclass
@@ -37,6 +39,8 @@ class InputRequest:
     prompt: str
     response: str | None = None
     event: asyncio.Event = field(default_factory=asyncio.Event)
+    source: str = ""
+    color_hex: str = ""
 
 
 @dataclass
@@ -83,6 +87,8 @@ class ExecutionModel:
     def __init__(self):
         self.pending_input: InputRequest | None = None
         self.pending_permission: PermissionPrompt | None = None
+        self._input_lock = asyncio.Lock()
+        self._permission_lock = asyncio.Lock()
         self.header: str = ""
         self.context = Context()
         self.import_errors = []
@@ -178,6 +184,28 @@ class ExecutionModel:
             warning (str): The warning message.
         """
         self.warnings.append(warning)
+
+    async def request_input(self, request: InputRequest) -> None:
+        """Expose an input request to the UI and wait for the user's response.
+
+        Serialized via a lock so parallel sub-executions queue rather than race.
+        The caller reads `request.response` after this returns.
+        """
+        async with self._input_lock:
+            self.pending_input = request
+            await request.event.wait()
+            self.pending_input = None
+
+    async def request_permission(self, prompt: PermissionPrompt) -> None:
+        """Expose a permission request to the UI and wait for the user's decision.
+
+        Serialized via a lock so parallel sub-executions queue rather than race.
+        The caller reads `prompt.approved` after this returns.
+        """
+        async with self._permission_lock:
+            self.pending_permission = prompt
+            await prompt.event.wait()
+            self.pending_permission = None
 
     def add_log(self, param: str):
         """
