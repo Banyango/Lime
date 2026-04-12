@@ -6,139 +6,50 @@ from rich.panel import Panel
 from rich.syntax import Syntax
 from rich.table import Table
 from rich.text import Text
-from textual import on
-from textual.app import ComposeResult
-from textual.containers import Vertical
-from textual.events import Click
-from textual.message import Message
-from textual.widgets import Static
 
-from lime_ai.app.display.run_header import RunHeader
-from lime_ai.app.display.status_constants import STATUS_ICON, STATUS_STYLE, SUB_RUN_PALETTE, NUM_SUB_COLORS
+from lime_ai.app.config import AppConfig
 from lime_ai.entities.function import FunctionCall
-from lime_ai.entities.run import ContentBlockType, RunStatus, ToolCall, ContentBlock
-from lime_ai.entities.run import Run
+from lime_ai.entities.run import ContentBlock, ContentBlockType, Run, RunStatus, ToolCall
 
 
-
-class RunWidget(Vertical):
-    """A single execution turn: clickable header + collapsible content."""
-
-    DEFAULT_CLASSES = "block"
-
-    class CollapseChanged(Message):
-        """Posted when the user explicitly collapses or expands a parent (non-sub) run."""
-
-        def __init__(self, widget: RunWidget, expanded: bool) -> None:
-            super().__init__()
-            self.run_widget = widget
-            self.expanded = expanded
-
-    def __init__(self, index: int) -> None:
-        super().__init__()
-        self._index = index
-        self._run: Run | None = None
-        self._header_fp: tuple | None = None
-        self._content_fp: tuple | None = None
+class RunWidgetContent:
+    def __init__(self):
+        self.num_content_blocks = 0
+        self.tool_calls = 0
+        self.status = None
+        self.last_text_len: int = 0
+        self.completed_tool_calls: int = 0
         self._tool_call_cache: dict = {}
 
-    def compose(self) -> ComposeResult:
-        yield RunHeader(id="run-header")
-        yield Static(id="run-content")
-
-    def on_mount(self) -> None:
-        self._refresh_header()
-        self._refresh_content()
-
-    def sync(self, run: Run) -> None:
-        """Called every poll tick with the latest data for this turn."""
-        self._run = run
-        self.set_class(run.is_sub_run, "-sub-run")
-        self.set_class(run.is_expanded, "-expanded")
-
-        if run.is_sub_run:
-            color_idx = self._index % NUM_SUB_COLORS
-            for i in range(NUM_SUB_COLORS):
-                self.set_class(i == color_idx, f"-sub-color-{i}")
-
-        self._refresh_header()
-        self._refresh_content()
-
-    @on(Click, "RunHeader")
-    def _on_header_click(self, event: Click) -> None:
-        event.stop()
-        self._run.on_expanded()
-        self.set_class(self._run.is_expanded, "-expanded")
-        self._content_fp = None
-        self._header_fp = None
-        self._refresh_header()
-        self._refresh_content()
-        if not self._run.is_sub_run:
-            self.post_message(self.CollapseChanged(self, self._run.is_expanded))
-
-    def _refresh_header(self) -> None:
-        if self._run is None:
-            return
-        run = self._run
-        fp = (run.status, run.duration_ms, run.tokens.total_tokens, run.model, run.event_name, run.title, run.is_sub_run, run.is_expanded)
-        if fp == self._header_fp:
-            return
-        self._header_fp = fp
-        try:
-            header = self.query_one("#run-header", RunHeader)
-        except Exception:
-            return
-        chevron = "▼" if run.is_expanded else "▶"
-        status_icon = STATUS_ICON.get(run.status, "○")
-        status_style = STATUS_STYLE.get(run.status, "dim")
-
-        t = Text()
-        t.append(f" {chevron} ", style="dim")
-        if run.is_sub_run:
-            color = SUB_RUN_PALETTE[self._index % NUM_SUB_COLORS]
-            t.append("Sub Run", style=f"bold {color}")
-            if run.title:
-                t.append(f"  {run.title}", style=f"dim {color}")
-        else:
-            t.append(f"Run {self._index + 1}", style="bold")
-            if run.title:
-                t.append(f"  {run.title}", style="dim cyan")
-        if run.model:
-            t.append(f"  {run.model}", style="dim")
-        t.append(f"  {status_icon} {run.status.value}", style=status_style)
-        if run.duration_ms is not None:
-            t.append(f"  {run.duration_ms / 1000:.1f}s", style="dim")
-        if run.tokens.total_tokens > 0 and not self._run.is_expanded:
-            t.append(f"  {run.tokens.total_tokens:,} tok", style="dim")
-        if run.event_name and not self._run.is_expanded:
-            t.append(f"  {run.event_name.value}", style="dim")
-        if not self._run.is_expanded and run.status not in (RunStatus.RUNNING, RunStatus.PENDING):
-            t.append("  (expand)", style="italic dim")
-
-        header.update(t)
-
-    def _refresh_content(self) -> None:
-        if self._run is None or not self._run.is_expanded:
-            return
-        run = self._run
+    def should_render(self, run: Run) -> bool:
+        num_content_blocks = len(run.content_blocks)
+        tool_calls = len(run.tool_calls)
+        status = run.status
         last_text_len = len(run.content_blocks[-1].text) if run.content_blocks else 0
         completed_tool_calls = sum(1 for tc in run.tool_calls if tc.success is not None)
-        fp = (len(run.content_blocks), len(run.tool_calls), run.status, last_text_len, completed_tool_calls)
-        if fp == self._content_fp:
-            return
-        self._content_fp = fp
-        try:
-            content = self.query_one("#run-content", Static)
-        except Exception:
-            return
-        parts: list = []
-        parts.extend(self.render_run(self._run))
-        content.update(Group(*parts) if parts else Text(""))
 
-    def render_run(self, run: Run) -> list:
+        if (num_content_blocks, tool_calls, status, last_text_len, completed_tool_calls) == (
+            self.num_content_blocks,
+            self.tool_calls,
+            self.status,
+            self.last_text_len,
+            self.completed_tool_calls,
+        ):
+            return False
+
+        return True
+
+    def refresh_content(self, run: Run, app_config: AppConfig):
+        parts: list = []
+
+        parts.extend(self.render_run(run, app_config))
+
+        return parts
+
+    def render_run(self, run: Run, app_config: AppConfig) -> list:
         parts = []
 
-        if run.provider != "local":
+        if app_config.show_context and run.provider != "local":
             parts.append(Text("Prompt:", style="bold blue"))
             parts.append(Text(run.prompt, style="dim"))
 
@@ -248,7 +159,8 @@ class RunWidget(Vertical):
     def _render_input(tc: ContentBlock) -> Panel:
         return Panel(Group(Markdown(tc.text)), border_style="dim", expand=True)
 
-    def render_function_calls(self, function_calls: list[FunctionCall]) -> list:
+    @staticmethod
+    def render_function_calls(function_calls: list[FunctionCall]) -> list:
         return [
             Panel(
                 Group(

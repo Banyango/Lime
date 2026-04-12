@@ -207,6 +207,13 @@ class ExecutionModel:
             await prompt.event.wait()
             self.pending_permission = None
 
+    async def dismiss_all_overlays(self):
+        self.pending_permission.event.clear()
+        self.pending_input.event.clear()
+
+        self.pending_permission = None
+        self.pending_input = None
+
     def add_log(self, param: str):
         """
         Add a log entry to the current run's content blocks with the given text.

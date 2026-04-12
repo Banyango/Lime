@@ -2,7 +2,7 @@ from unittest.mock import Mock
 
 from textual.widgets import Input
 
-from lime_ai.app.writers.textual_app import InputOverlay
+from lime_ai.app.ui.components.input_overlay import InputOverlay
 
 
 def test_input_overlay_compose_yields_prompt_and_input():

@@ -24,7 +24,7 @@ Lime is using Copilot (currently), so you will need to have the [Copilot CLI](ht
 
 Create a file named `hello.mgx` with the following content:
 
-```margarita
+```mgx
 ---
 description: Hello world tutorial for Lime!
 ---

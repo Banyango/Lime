@@ -1000,10 +1000,10 @@
 
 <h1 id="user-input">User Input<a class="headerlink" href="#user-input" title="Permanent link">&para;</a></h1>
 <p>Lime supports Getting user input during a run with the <code>@effect input</code> node.</p>
-<div class="highlight"><pre><span></span><code>@effect input &quot;What is your favorite color?&quot; =&gt; favorite_color
+<div class="language-margarita highlight"><pre><span></span><code><span class="kd">@effect</span><span class="w"> </span><span class="k">input</span><span class="w"> </span><span class="s2">&quot;What is your favorite color? </span><span class="o">=&gt;</span><span class="w"> </span><span class="nv">favorite_color</span>
 
-// Then we can use the favorite_color variable in the context or in func effects.
-@effect log &quot;The user&#39;s favorite color is ${favorite_color}.&quot;
+<span class="c1">// Then we can use the favorite_color variable in the context or in func effects.</span>
+<span class="kd">@effect</span><span class="w"> </span><span class="k">log</span><span class="w"> </span><span class="s2">&quot;The user&#39;s favorite color is </span><span class="nv">${favorite_color}</span><span class="s2">.&quot;</span>
 </code></pre></div>
 <p>In the example above, the agent will ask the user "What is your favorite color?" and store the response in the variable 
 <code>favorite_color</code>. The agent can then use this variable in subsequent context or function effects.</p>

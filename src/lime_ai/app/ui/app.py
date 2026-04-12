@@ -1,3 +1,4 @@
+import re
 import sys
 from pathlib import Path
 from time import monotonic
@@ -11,13 +12,12 @@ from textual.containers import Vertical, VerticalScroll
 from textual.events import Timer
 from textual.widgets import Footer, Header, Input, Static
 
-from lime_ai.app.config import AppConfig
-from lime_ai.app.config import save_app_config
-from lime_ai.app.display.app_header import AppHeader
-from lime_ai.app.display.input_overlay import InputOverlay
-from lime_ai.app.display.permission_overlay import PermissionOverlay
-from lime_ai.app.display.run_widget import RunWidget
-from lime_ai.app.display.status_constants import SPINNER_FRAMES
+from lime_ai.app.config import AppConfig, save_app_config
+from lime_ai.app.ui.components.app_header import AppHeader
+from lime_ai.app.ui.components.input_overlay import InputOverlay
+from lime_ai.app.ui.components.permission_overlay import PermissionOverlay
+from lime_ai.app.ui.components.run_widget import RunWidget
+from lime_ai.app.ui.status_constants import SPINNER_FRAMES
 from lime_ai.core.agents.models import ExecutionModel
 from lime_ai.entities.run import ContentBlockType, RunStatus
 
@@ -34,7 +34,8 @@ class LimeApp(App):
     BINDINGS = [
         Binding("q", "quit", "Quit"),
         Binding("space", "toggle_auto_scroll", "Auto-scroll"),
-        Binding("p", "toggle_permissions", "Permissions"),
+        Binding("p", "toggle_permissions", "Use/Ignore Permissions"),
+        Binding("c", "toggle_context", "Show/Hide Context"),
     ]
 
     def __init__(self, execution_model: ExecutionModel, app_config: AppConfig) -> None:
@@ -70,12 +71,16 @@ class LimeApp(App):
 
     async def _poll(self) -> None:
         await self._sync_runs()
+
         self._sync_header()
         self._sync_status()
+
         self._sync_input()
         self._sync_permission()
+
         if self._auto_scroll:
             self.query_one("#scroll", VerticalScroll).scroll_end(animate=False)
+
         if self._model.done:
             self._poll_timer.stop()
 
@@ -99,7 +104,7 @@ class LimeApp(App):
                 continue
 
             if i not in self._run_widgets:
-                widget = RunWidget(i)
+                widget = RunWidget(i, self.app_config)
                 self._run_widgets[i] = widget
                 await container.mount(widget)
 
@@ -115,15 +120,20 @@ class LimeApp(App):
         all_done = all(t.run and t.run.status in (RunStatus.COMPLETED, RunStatus.ERROR) for t in model.turns if t.run)
         if all_done:
             self._auto_scroll = False
+
             t = Text()
+
             t.append("● ", style="bold green")
             t.append("All turns completed  ", style="dim")
             t.append("q", style="bold")
             t.append(" to quit", style="dim")
+
             self.query_one("#status-line", Static).update(t)
         else:
             frame = SPINNER_FRAMES[int(monotonic() * 10) % len(SPINNER_FRAMES)]
+
             t = Text()
+
             t.append(f"{frame} ", style="green")
             t.append("Executing…", style="dim")
 
@@ -131,12 +141,12 @@ class LimeApp(App):
             if run is not None:
                 reasoning_blocks = [b for b in run.content_blocks if b.type == ContentBlockType.REASONING and b.text]
                 if reasoning_blocks:
-                    import re
-
                     latest = reasoning_blocks[-1].text
                     condensed = re.findall(r"\*\*(.+?)\*\*", latest)
+
                     snippet = condensed[-1] if condensed else latest
                     snippet = snippet.replace("\n", " ").strip()
+
                     if len(snippet) > 80:
                         snippet = snippet[:77] + "…"
                     t.append(f"  {snippet}", style="dim italic")
@@ -146,6 +156,7 @@ class LimeApp(App):
     def _sync_input(self) -> None:
         pending = self._model.pending_input
         overlay = self.query_one("#input-overlay", InputOverlay)
+
         if pending is not None:
             if pending is not self._displayed_input:
                 self._displayed_input = pending
@@ -209,12 +220,16 @@ class LimeApp(App):
         self.notify(f"Auto-scroll {'on' if self._auto_scroll else 'off'}")
 
     def action_toggle_permissions(self) -> None:
-        from lime_ai.app.config import save_app_config
-
         config = self.app_config
         config.ignore_permissions = not config.ignore_permissions
         save_app_config(config)
         self.notify(f"Permission requests {'off' if config.ignore_permissions else 'on'}")
+
+    def action_toggle_context(self):
+        config = self.app_config
+        config.show_context = not config.show_context
+        save_app_config(config)
+        self.notify(f"Context {'off' if config.show_context else 'on'}")
 
     def on_key(self, event) -> None:
         if event.key in ("up", "down", "pageup", "pagedown", "home", "end"):

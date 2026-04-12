@@ -1067,17 +1067,17 @@
 
 <h1 id="running-the-agent">Running the Agent<a class="headerlink" href="#running-the-agent" title="Permanent link">&para;</a></h1>
 <p>Run the agent CLI (example):</p>
-<div class="highlight"><pre><span></span><code>lime<span class="w"> </span>execute<span class="w"> </span>example.mgx
+<div class="language-bash highlight"><pre><span></span><code>lime<span class="w"> </span>execute<span class="w"> </span>example.mgx
 </code></pre></div>
 <h2 id="specify-the-model">Specify the model<a class="headerlink" href="#specify-the-model" title="Permanent link">&para;</a></h2>
 <p>You can specify the model to use by adding a model field to the metadata of your .mgx file:</p>
-<div class="highlight"><pre><span></span><code>---
+<div class="language-margaritascript highlight"><pre><span></span><code>---
 model: &quot;gpt-4&quot;
 ---
 
-&lt;&lt; test &gt;&gt;
+<span class="dl">&lt;&lt;</span><span class="go"> test </span><span class="dl">&gt;&gt;</span>
 
-@effect run
+<span class="kd">@effect</span><span class="w"> </span><span class="k">run</span>
 </code></pre></div>
 
 

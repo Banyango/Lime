@@ -14,6 +14,7 @@ class FakeSession:
 
     def on(self, handler):
         self._handler = handler
+        return lambda: None
 
     async def send_and_wait(self, msg, timeout=0):
         return SimpleNamespace(data=SimpleNamespace(content="ok"))

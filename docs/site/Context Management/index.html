@@ -1076,38 +1076,38 @@
 <li>Summarizes the new books</li>
 <li>Then we contrast the new summary with the previous summary stored in the <code>summary</code> variable.</li>
 </ol>
-<div class="highlight"><pre><span></span><code>// file:context_management_example.mg
+<div class="language-lime highlight"><pre><span></span><code><span class="c1">// file:context_management_example.mg</span>
 
-@state summary = &quot;&quot;
+<span class="kd">@state</span><span class="w"> </span><span class="nv">summary</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;&quot;</span>
 
-&lt;&lt;
-You are a helpful assistant.
+<span class="dl">&lt;&lt;</span>
+<span class="go">You are a helpful assistant.</span>
 
-I&#39;ve loaded 50 books into your context so 
-your context is quite large now.
+<span class="go">I&#39;ve loaded 50 books into your context so </span>
+<span class="go">your context is quite large now.</span>
 
-Give a summary of the books.
+<span class="go">Give a summary of the books.</span>
 
-Store the summary in a variable called &quot;summary&quot; for later use.
-&gt;&gt;
+<span class="go">Store the summary in a variable called &quot;summary&quot; for later use.</span>
+<span class="dl">&gt;&gt;</span>
 
-@effect run
+<span class="kd">@effect</span><span class="w"> </span><span class="k">run</span>
 
-// If we load another 50 books, the context will be even larger and may cause issues with token limits.
+<span class="c1">// If we load another 50 books, the context will be even larger and may cause issues with token limits.</span>
 
-// If we have a second mdx script we would lose any state from the first script.
+<span class="c1">// If we have a second mdx script we would lose any state from the first script.</span>
 
-// Use @effect context clear to reset the context while retaining the `summary` variable.
-@effect context clear
+<span class="c1">// Use @effect context clear to reset the context while retaining the `summary` variable.</span>
+<span class="kd">@effect</span><span class="w"> </span><span class="k">context</span><span class="w"> </span><span class="k">clear</span>
 
-// All variables are retained
-&lt;&lt;
-Load 50 more books and summarize.
+<span class="c1">// All variables are retained</span>
+<span class="dl">&lt;&lt;</span>
+<span class="go">Load 50 more books and summarize.</span>
 
-Contrast with Previous Summary: ${summary}
-&gt;&gt;
+<span class="go">Contrast with Previous Summary: </span><span class="nv">${summary}</span>
+<span class="dl">&gt;&gt;</span>
 
-@effect run
+<span class="kd">@effect</span><span class="w"> </span><span class="k">run</span>
 </code></pre></div>
 
 

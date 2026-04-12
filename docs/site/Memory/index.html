@@ -1126,24 +1126,24 @@
 <p>memory variables will be stored into a <code>memory.json</code> file at the end of a run.</p>
 <p>It then loads that same data back into memory at the beginning of the next run so that it can be used in the context and in func effects.</p>
 <p>To use memory, you can use the <code>@memory var</code> node to create a new memory variable. For example:</p>
-<div class="highlight"><pre><span></span><code>@memory var favorite_color
+<div class="language-margarita highlight"><pre><span></span><code><span class="kd">@memory</span><span class="w"> </span><span class="k">var</span><span class="w"> </span><span class="nv">favorite_color</span>
 
-&lt;&lt;
-If favorite_color is not set set it to &quot;blue&quot;
-Otherwise write a log message saying &quot;The user&#39;s favorite color is favorite_color&quot;
-&gt;&gt;
+<span class="dl">&lt;&lt;</span>
+<span class="go">If favorite_color is not set set it to &quot;blue&quot;</span>
+<span class="go">Otherwise write a log message saying &quot;The user&#39;s favorite color is favorite_color&quot;</span>
+<span class="dl">&gt;&gt;</span>
 
-@effect run
+<span class="kd">@effect</span><span class="w"> </span><span class="k">run</span>
 </code></pre></div>
 <h2 id="immediate-effects">Immediate effects<a class="headerlink" href="#immediate-effects" title="Permanent link">&para;</a></h2>
 <p>These operations on memory variables are immediate effects. This means that they will be executed immediately when the agent encounters them in the script, rather than being deferred until the <code>@effect run</code> node.</p>
 <h3 id="deleting-memory-variables">Deleting Memory Variables<a class="headerlink" href="#deleting-memory-variables" title="Permanent link">&para;</a></h3>
 <p>We can also delete variables from memory with the <code>@memory delete</code> node. For example:</p>
-<div class="highlight"><pre><span></span><code>@memory delete favorite_color
+<div class="language-margarita highlight"><pre><span></span><code><span class="kd">@memory</span><span class="w"> </span><span class="k">delete</span><span class="w"> </span><span class="nv">favorite_color</span>
 </code></pre></div>
 <h3 id="clearing-memory">Clearing Memory<a class="headerlink" href="#clearing-memory" title="Permanent link">&para;</a></h3>
 <p>We can clear all variables from memory with the <code>@memory clear</code> node. For example:</p>
-<div class="highlight"><pre><span></span><code>@memory clear
+<div class="language-margarita highlight"><pre><span></span><code><span class="kd">@memory</span><span class="w"> </span><span class="k">clear</span>
 </code></pre></div>
 
 

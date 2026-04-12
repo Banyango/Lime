@@ -3,7 +3,7 @@ from unittest.mock import AsyncMock, MagicMock
 
 from click.testing import CliRunner
 
-import lime_ai.app.agents.execute as execute_module
+import lime_ai.app.cli.agents.execute as execute_module
 import lime_ai.app.lifecycle as lifecycle_module
 from lime_ai.app.config import AppConfig
 from lime_ai.core.agents.services.memory import MemoryService

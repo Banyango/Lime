@@ -1000,11 +1000,11 @@
 
 <h1 id="state">State<a class="headerlink" href="#state" title="Permanent link">&para;</a></h1>
 <p>Lime supports storing and accessing state during a run.</p>
-<div class="highlight"><pre><span></span><code>@state count = 0
+<div class="language-margarita highlight"><pre><span></span><code><span class="kd">@state</span><span class="w"> </span><span class="nv">count</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="m">0</span>
 
-&lt;&lt; What is the count variable? &gt;&gt;
+<span class="dl">&lt;&lt;</span><span class="go"> What is the count variable? </span><span class="dl">&gt;&gt;</span>
 
-@effect run
+<span class="kd">@effect</span><span class="w"> </span><span class="k">run</span>
 </code></pre></div>
 <p>The example above defines a state variable named <code>count</code>.</p>
 <p>To read a value from state, instruct the agent to "use the <code>count</code> variable" or "get count from shared state"; the system will return the current value. </p>
@@ -1012,11 +1012,11 @@
 <p>Note that language models can be nondeterministic, so the agent may not always call the state tool.</p>
 </blockquote>
 <p>You can also instruct the agent to set or update state values. For example, asking it to "set count to 5" or "update count to 10" will update the <code>count</code> variable in state (again, the agent may not always call the tool due to model nondeterminism).</p>
-<div class="highlight"><pre><span></span><code>@state count = 0
+<div class="language-margarita highlight"><pre><span></span><code><span class="kd">@state</span><span class="w"> </span><span class="nv">count</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="m">0</span>
 
-&lt;&lt; Set the count variable to 5 &gt;&gt;
+<span class="dl">&lt;&lt;</span><span class="go"> Set the count variable to 5 </span><span class="dl">&gt;&gt;</span>
 
-@effect run
+<span class="kd">@effect</span><span class="w"> </span><span class="k">run</span>
 </code></pre></div>
 <p>The example above sets the <code>count</code> variable to 5.</p>
 

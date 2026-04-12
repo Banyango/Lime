@@ -1,10 +1,9 @@
 from typing import Any
 
-from rich.text import Text
 from wireup import injectable
 
 from lime_ai.app.config import AppConfig
-from lime_ai.app.display.app import LimeApp
+from lime_ai.app.ui.app import LimeApp
 from lime_ai.core.agents.models import ExecutionModel
 from lime_ai.core.interfaces.ui import UI
 

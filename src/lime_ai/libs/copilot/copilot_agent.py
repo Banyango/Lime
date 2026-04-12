@@ -374,27 +374,38 @@ class CopilotQuery(QueryService):
 
         unsubscribe = self.client.session.on(handle_event)
 
-        response = await self.client.session.send_and_wait(
-            MessageOptions(prompt=execution_model.context.window), timeout=300
-        )
-
-        if run.status != RunStatus.COMPLETED:
-            run.end_time = datetime.now(UTC)
-            run.status = RunStatus.COMPLETED
-        if run.start_time and run.end_time:
-            run.duration_ms = (run.end_time - run.start_time).total_seconds() * 1000
-
-        if self.logger_service:
-            self.logger_service.print(
-                f"[Run completed]"
-                f" duration={(run.duration_ms or 0) / 1000:.1f}s"
-                f" status={run.status.value}"
-                f" shutdown_reason={run.shutdown_reason}"
+        try:
+            response = await self.client.session.send_and_wait(
+                MessageOptions(prompt=execution_model.context.window), timeout=300
             )
 
-        execution_model.current_run.result = response.data.content if response else None
+            if run.status != RunStatus.COMPLETED:
+                run.end_time = datetime.now(UTC)
+                run.status = RunStatus.COMPLETED
+            if run.start_time and run.end_time:
+                run.duration_ms = (run.end_time - run.start_time).total_seconds() * 1000
 
-        unsubscribe()
+            if self.logger_service:
+                self.logger_service.print(
+                    f"[Run completed]"
+                    f" duration={(run.duration_ms or 0) / 1000:.1f}s"
+                    f" status={run.status.value}"
+                    f" shutdown_reason={run.shutdown_reason}"
+                )
+
+            execution_model.current_run.result = response.data.content if response else None
+
+            unsubscribe()
+        except TimeoutError:
+            run.status = RunStatus.ERROR
+            run.end_time = datetime.now(UTC)
+            execution_model.dismiss_all_overlays()
+            unsubscribe()
+
+            if self.logger_service:
+                self.logger_service.print(f"[Run error] shutdown_reason={ShutdownReason.TIMEOUT}")
+
+            return ""
 
         return response.data.content
 

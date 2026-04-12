@@ -12,7 +12,7 @@ This example:
 4. Summarizes the new books
 5. Then we contrast the new summary with the previous summary stored in the `summary` variable.
 
-```
+```lime
 // file:context_management_example.mg
 
 @state summary = ""

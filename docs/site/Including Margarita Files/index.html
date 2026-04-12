@@ -1090,20 +1090,20 @@
 <h1 id="including-margarita-files">Including Margarita Files<a class="headerlink" href="#including-margarita-files" title="Permanent link">&para;</a></h1>
 <p>Lime supports including other <a href="https://github.com/Banyango/margarita">Margarita</a> files using the <code>[[ file ]]</code> syntax. This allows you to reuse template fragments across multiple templates.</p>
 <h3 id="example">Example:<a class="headerlink" href="#example" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code>// filename: tester_role.mg
-&lt;&lt;
-You are a tester AI assistant.
+<div class="language-margarita highlight"><pre><span></span><code><span class="c1">// filename: tester_role.mg</span>
+<span class="dl">&lt;&lt;</span>
+<span class="go">You are a tester AI assistant.</span>
 
-Run playwright tests on the provided files
+<span class="go">Run playwright tests on the provided files</span>
 
-${files}
-&gt;&gt;
+<span class="nv">${files}</span>
+<span class="dl">&gt;&gt;</span>
 </code></pre></div>
-<div class="highlight"><pre><span></span><code>// filename: page.mgx
+<div class="language-margarita highlight"><pre><span></span><code><span class="c1">// filename: page.mgx</span>
 
 [[ tester_role.mg files=[&quot;test1.spec.ts&quot;, &quot;test2.spec.ts&quot;] ]]
 
-@effect run
+<span class="kd">@effect</span><span class="w"> </span><span class="k">run</span>
 </code></pre></div>
 <h3 id="see-also">See also<a class="headerlink" href="#see-also" title="Permanent link">&para;</a></h3>
 <p>See the <a href="http://github.com/Banyango/margarita">Margarita documentation</a> for more details on template syntax, conditionals, loops, and metadata.</p>

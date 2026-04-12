@@ -1132,10 +1132,10 @@
 <h1 id="getting-started">Getting started<a class="headerlink" href="#getting-started" title="Permanent link">&para;</a></h1>
 <h2 id="installation">Installation<a class="headerlink" href="#installation" title="Permanent link">&para;</a></h2>
 <p>Run the following command to install Lime:</p>
-<div class="highlight"><pre><span></span><code>uvx<span class="w"> </span>lime-ai<span class="w"> </span>hello.mgx
+<div class="language-sh highlight"><pre><span></span><code>uvx<span class="w"> </span>lime-ai<span class="w"> </span>hello.mgx
 </code></pre></div>
 <p>To install it as a persistent tool:</p>
-<div class="highlight"><pre><span></span><code>uv<span class="w"> </span>tool<span class="w"> </span>install<span class="w"> </span>lime-ai
+<div class="language-sh highlight"><pre><span></span><code>uv<span class="w"> </span>tool<span class="w"> </span>install<span class="w"> </span>lime-ai
 </code></pre></div>
 <h2 id="copilot">Copilot<a class="headerlink" href="#copilot" title="Permanent link">&para;</a></h2>
 <p>Lime is using Copilot (currently), so you will need to have the <a href="https://docs.github.com/en/copilot/how-tos/copilot-cli/install-copilot-cli">Copilot CLI</a> installed and configured to use Lime.</p>
@@ -1144,19 +1144,19 @@
 </blockquote>
 <h2 id="your-first-template">Your first template<a class="headerlink" href="#your-first-template" title="Permanent link">&para;</a></h2>
 <p>Create a file named <code>hello.mgx</code> with the following content:</p>
-<div class="highlight"><pre><span></span><code>---
+<div class="language-mgx highlight"><pre><span></span><code>---
 description: Hello world tutorial for Lime!
 ---
 
-&lt;&lt;
-# Hello World
+<span class="dl">&lt;&lt;</span>
+<span class="go"># Hello World</span>
 
-Tell the user Hello, and welcome them to Lime!
-&gt;&gt;
+<span class="go">Tell the user Hello, and welcome them to Lime!</span>
+<span class="dl">&gt;&gt;</span>
 
-@effect run
+<span class="kd">@effect</span><span class="w"> </span><span class="k">run</span>
 </code></pre></div>
-<div class="highlight"><pre><span></span><code>lime<span class="w"> </span>execute<span class="w"> </span>hello.mgx
+<div class="language-shell highlight"><pre><span></span><code>lime<span class="w"> </span>execute<span class="w"> </span>hello.mgx
 </code></pre></div>
 <blockquote>
 <p>Note: This template includes metadata, this is optional but recommended for better organization and discoverability. Metadata can contain any key value pair.</p>
@@ -1165,7 +1165,7 @@ Tell the user Hello, and welcome them to Lime!
 <p><code>@effect run</code> is a special instruction that tells the agent to execute.</p>
 <p>Once you run the command, you should see the following output in your terminal:</p>
 <h2 id="output">Output<a class="headerlink" href="#output" title="Permanent link">&para;</a></h2>
-<div class="highlight"><pre><span></span><code><span class="gh"># Hello World</span>
+<div class="language-Markdown highlight"><pre><span></span><code><span class="gh"># Hello World</span>
 
 Hello, and welcome to Lime!
 </code></pre></div>

@@ -217,7 +217,10 @@ class ExecuteAgentOperation:
 
             elif isinstance(node, AllAwaitNode):
                 self.execution_model.current_run.content_blocks.append(
-                    ContentBlock(type=ContentBlockType.AWAIT_ALL, text=f"[AwaitAll] processing children... {len(node.effect_nodes)} effect(s)")
+                    ContentBlock(
+                        type=ContentBlockType.AWAIT_ALL,
+                        text=f"[AwaitAll] processing children... {len(node.effect_nodes)} effect(s)",
+                    )
                 )
                 results = await asyncio.gather(
                     *[self._execute_effect_async(effect.raw_content) for effect in node.effect_nodes],

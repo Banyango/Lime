@@ -56,5 +56,3 @@ class InputOverlay(Vertical):
         event.stop()
         self.post_message(self.Submitted(event.value))
         self.query_one("#input-field", Input).clear()
-
-

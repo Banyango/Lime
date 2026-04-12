@@ -1002,18 +1002,18 @@
 <p>Lime supports logging output as your scripts are running.
 This can be useful for debugging and monitoring the progress of your scripts.</p>
 <p>To log output, use the <code>@effect log</code> node in your script. For example:</p>
-<div class="highlight"><pre><span></span><code>@effect log &quot;This is a log message.&quot;
+<div class="language-margarita highlight"><pre><span></span><code><span class="kd">@effect</span><span class="w"> </span><span class="k">log</span><span class="w"> </span><span class="s2">&quot;This is a log message.&quot;</span>
 </code></pre></div>
 <p>Outputs:
-<div class="highlight"><pre><span></span><code>[<span class="nl">INFO</span>]: <span class="na">This is a log message.</span>
+<div class="language-markdown highlight"><pre><span></span><code>[<span class="nl">INFO</span>]: <span class="na">This is a log message.</span>
 </code></pre></div></p>
 <p>You can also include variables in your log messages. For example:</p>
-<div class="highlight"><pre><span></span><code>@state count = 0
+<div class="language-margarita highlight"><pre><span></span><code><span class="kd">@state</span><span class="w"> </span><span class="nv">count</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="m">0</span>
 
-@effect log &quot;The current count is ${count}.&quot;
+<span class="kd">@effect</span><span class="w"> </span><span class="k">log</span><span class="w"> </span><span class="s2">&quot;The current count is </span><span class="nv">${count}</span><span class="s2">.&quot;</span>
 </code></pre></div>
 <p>Outputs:
-<div class="highlight"><pre><span></span><code>[<span class="nl">INFO</span>]: <span class="na">The current count is 0.</span>
+<div class="language-markdown highlight"><pre><span></span><code>[<span class="nl">INFO</span>]: <span class="na">The current count is 0.</span>
 </code></pre></div></p>
 
 

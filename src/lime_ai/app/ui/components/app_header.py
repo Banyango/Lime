@@ -9,6 +9,7 @@ LOGO = Text.from_ansi(
     "\033[32m _ _\n| (_)_ __ ___   ___\n| | | '_ ` _ \\ / _ \\\n| | | | | | | |  __/\n|_|_|_| |_| |_|\\___|\n\033[0m"
 )
 
+
 class AppHeader:
     @staticmethod
     def render(model: ExecutionModel) -> list:

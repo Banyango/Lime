@@ -1003,9 +1003,9 @@
 <blockquote>
 <p>Note: The Python module (for example, <code>my_module</code>) must be available in the activated Python environment, and the import path must be correct.</p>
 </blockquote>
-<div class="highlight"><pre><span></span><code>from my_module import compute
+<div class="language-mgx highlight"><pre><span></span><code><span class="k">from</span><span class="w"> </span><span class="nn">my_module</span><span class="w"> </span><span class="k">import</span><span class="w"> </span><span class="nf">compute</span>
 
-@effect func compute(x) =&gt; result
+<span class="kd">@effect</span><span class="w"> </span><span class="k">func</span><span class="w"> </span><span class="nf">compute</span><span class="p">(</span><span class="nv">x</span><span class="p">)</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="nv">result</span>
 </code></pre></div>
 <p>The example above calls <code>compute(x)</code> and stores its return value in the <code>result</code> state variable. You can reference this value in subsequent prompts using <code>${result}</code>.</p>
 <p>Running functions this way avoids consuming LLM tokens for tool calls and lets you invoke deterministic logic directly instead of relying on the model to select the correct tool.</p>

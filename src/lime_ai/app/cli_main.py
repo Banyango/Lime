@@ -1,7 +1,7 @@
 import click
 
-from lime_ai.app.agents.execute import execute
-from lime_ai.app.prompts.commands import prompts
+from lime_ai.app.cli.agents.execute import execute
+from lime_ai.app.cli.prompts.commands import prompts
 
 
 @click.group()

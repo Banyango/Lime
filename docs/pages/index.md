@@ -14,7 +14,7 @@ Features
 
 # Example
 
-```
+```lime
 // file:example.mgx
 ---
 description: Add metadata
@@ -44,7 +44,7 @@ for i in items:
     // run Python functions and store results in state.
     @effect func add(12, test.data) => result
 
-// The agent can access/ set state variables too!
+// The agent can access or set state variables too!
 <<
 Add 12 + test.data and store the result in the variable 'result'.
 >>

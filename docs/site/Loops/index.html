@@ -1067,25 +1067,25 @@
 
 <h1 id="loops">Loops<a class="headerlink" href="#loops" title="Permanent link">&para;</a></h1>
 <p>Use <code>for</code> loops inside <code>.mgx</code> to generate repeated sections.</p>
-<div class="highlight"><pre><span></span><code>@state items = [&quot;apple&quot;, &quot;banana&quot;, &quot;cherry&quot;]
+<div class="language-mgx highlight"><pre><span></span><code><span class="kd">@state</span><span class="w"> </span><span class="nv">items</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="go">&quot;apple&quot;, &quot;banana&quot;, &quot;cherry&quot;</span><span class="p">]</span>
 
-for i in items:
-    &lt;&lt;Iteration ${i}&gt;&gt;
+<span class="k">for</span><span class="w"> </span><span class="nv">i</span><span class="w"> </span><span class="k k-Operator">in</span><span class="w"> </span><span class="nv">items</span><span class="p">:</span>
+    <span class="dl">&lt;&lt;</span><span class="go">Iteration </span><span class="nv">${i}</span><span class="dl">&gt;&gt;</span>
 </code></pre></div>
 <p>The prompt would be loaded with
-<div class="highlight"><pre><span></span><code>Iteration apple
+<div class="language-markdown highlight"><pre><span></span><code>Iteration apple
 Iteration banana
 Iteration cherry
 </code></pre></div></p>
 <h2 id="dictionary-iteration">Dictionary Iteration<a class="headerlink" href="#dictionary-iteration" title="Permanent link">&para;</a></h2>
 <p>Use <code>for key, value in dict_var:</code> to iterate over both keys and values of a dictionary.</p>
-<div class="highlight"><pre><span></span><code>@state person = {&quot;name&quot;: &quot;Alice&quot;, &quot;role&quot;: &quot;admin&quot;}
+<div class="language-mgx highlight"><pre><span></span><code><span class="kd">@state</span><span class="w"> </span><span class="nv">person</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="go">&quot;name&quot;: &quot;Alice&quot;, &quot;role&quot;: &quot;admin&quot;</span><span class="p">}</span>
 
-for key, value in person:
-    &lt;&lt;${key}: ${value}&gt;&gt;
+<span class="k">for</span><span class="w"> </span><span class="nv">key</span><span class="p">,</span><span class="w"> </span><span class="nv">value</span><span class="w"> </span><span class="k k-Operator">in</span><span class="w"> </span><span class="nv">person</span><span class="p">:</span>
+    <span class="dl">&lt;&lt;</span><span class="nv">${key}</span><span class="go">: </span><span class="nv">${value}</span><span class="dl">&gt;&gt;</span>
 </code></pre></div>
 <p>The prompt would be loaded with
-<div class="highlight"><pre><span></span><code>name: Alice
+<div class="language-markdown highlight"><pre><span></span><code>name: Alice
 role: admin
 </code></pre></div></p>
 

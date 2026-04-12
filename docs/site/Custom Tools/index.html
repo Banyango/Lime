@@ -1000,13 +1000,13 @@
 
 <h1 id="custom-tools">Custom Tools<a class="headerlink" href="#custom-tools" title="Permanent link">&para;</a></h1>
 <p>Register tools for the LLM with <code>@effect tools</code> and implement get/set variable helpers.</p>
-<div class="highlight"><pre><span></span><code>from math import add
+<div class="language-mgx highlight"><pre><span></span><code><span class="k">from</span><span class="w"> </span><span class="nn">math</span><span class="w"> </span><span class="k">import</span><span class="w"> </span><span class="nf">add</span>
 
-&lt;&lt;Add 3 and 5 &gt;&gt;
+<span class="dl">&lt;&lt;</span><span class="go">Add 3 and 5 </span><span class="dl">&gt;&gt;</span>
 
-@effect tools add(x: int, y: int) =&gt; result
+<span class="kd">@effect</span><span class="w"> </span><span class="k">tools</span><span class="w"> </span><span class="nf">add</span><span class="p">(</span><span class="nv">x</span><span class="p">: </span><span class="nb">int</span><span class="p">,</span><span class="w"> </span><span class="nv">y</span><span class="p">: </span><span class="nb">int</span><span class="p">)</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="nv">result</span>
 
-@effect run
+<span class="err">@</span><span class="nf">effect</span><span class="w"> </span><span class="nv">run</span>
 </code></pre></div>
 <p>This will register the <code>add</code> function as a tool that the LLM can call. </p>
 <p>Standard prompt engineering techniques can be used to get the LLM to call the tool and pass the correct arguments.</p>

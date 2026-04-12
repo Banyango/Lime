@@ -1,7 +1,7 @@
 # Memory
 
 
-Lime supports using memory to story information to json after a run.
+Lime supports using memory to store information to json after a run.
 
 memory variables will be stored into a `memory.json` file at the end of a run.
 

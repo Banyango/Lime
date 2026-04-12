@@ -4,7 +4,7 @@ from pathlib import Path
 
 from click.testing import CliRunner
 
-from lime_ai.app.prompts import commands as prompts_module
+from lime_ai.app.cli.prompts import commands as prompts_module
 from lime_ai.entities.prompt_integrity import DEFAULT_PROMPT_MANIFEST_CONTENT, PromptIntegrityError
 from lime_ai.libs.prompt_integrity.filesystem_integrity_service import FilesystemPromptIntegrity
 

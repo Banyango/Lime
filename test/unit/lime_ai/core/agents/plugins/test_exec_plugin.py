@@ -1,4 +1,3 @@
-
 import pytest
 
 from lime_ai.core.agents.models import ExecutionModel
@@ -18,8 +17,10 @@ class MockMemoryService(MemoryService):
 
 def _make_plugin(plugin_factory=None):
     if plugin_factory is None:
+
         def plugin_factory():
             return []
+
     return ExecPlugin(
         plugin_factory=plugin_factory,
         memory_service=MockMemoryService(),

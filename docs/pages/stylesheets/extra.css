@@ -1,0 +1,153 @@
+/* Custom CSS for Lime documentation */
+
+/* ── Lime / MGX / Margarita syntax highlighting ── */
+
+/* Shorthand: all Lime-family language classes share the same rules */
+.language-lime.highlight,
+.language-mgx.highlight,
+.language-margarita.highlight,
+.language-margaritascript.highlight {
+    background-color: var(--md-code-bg-color);
+}
+
+/* @state / @memory / @effect decorator keywords  (Keyword.Declaration → kd) */
+.language-lime .kd,
+.language-mgx .kd,
+.language-margarita .kd,
+.language-margaritascript .kd {
+    color: var(--md-code-hl-keyword-color, #c678dd);
+    font-weight: 600;
+}
+
+/* Control-flow keywords: if, elif, else, for  (Keyword → k) */
+.language-lime .k,
+.language-mgx .k,
+.language-margarita .k,
+.language-margaritascript .k {
+    color: var(--md-code-hl-keyword-color, #c678dd);
+}
+
+/* Keyword operators: in, and, or, not  (Keyword.Operator → ko) */
+.language-lime .ko,
+.language-mgx .ko,
+.language-margarita .ko,
+.language-margaritascript .ko {
+    color: var(--md-code-hl-keyword-color, #c678dd);
+    font-style: italic;
+}
+
+/* Keyword constants: True, False, None  (Keyword.Constant → kc) */
+.language-lime .kc,
+.language-mgx .kc,
+.language-margarita .kc,
+.language-margaritascript .kc {
+    color: var(--md-code-hl-number-color, #d19a66);
+}
+
+/* Variables  ${...}  (Name.Variable → nv) */
+.language-lime .nv,
+.language-mgx .nv,
+.language-margarita .nv,
+.language-margaritascript .nv {
+    color: #e126e1;
+}
+
+/* Function names  (Name.Function → nf) */
+.language-lime .nf,
+.language-mgx .nf,
+.language-margarita .nf,
+.language-margaritascript .nf {
+    color: var(--md-code-hl-function-color, #61afef);
+}
+
+/* Module / namespace (import paths)  (Name.Namespace → nn) */
+.language-lime .nn,
+.language-mgx .nn,
+.language-margarita .nn,
+.language-margaritascript .nn {
+    color: var(--md-code-hl-string-color, #98c379);
+}
+
+/* Built-ins: range, etc.  (Name.Builtin → nb) */
+.language-lime .nb,
+.language-mgx .nb,
+.language-margarita .nb,
+.language-margaritascript .nb {
+    color: var(--md-code-hl-function-color, #61afef);
+    font-style: italic;
+}
+
+/* Output / prompt block content  (Generic.Output → go) */
+.language-lime .go,
+.language-mgx .go,
+.language-margarita .go,
+.language-margaritascript .go {
+    color: var(--md-default-fg-color--light, #abb2bf);
+    font-style: italic;
+}
+
+/* Output block delimiters  << >>  (String.Delimiter → sd) */
+.language-lime .sd,
+.language-mgx .sd,
+.language-margarita .sd,
+.language-margaritascript .sd {
+    color: #ef7822;
+    font-weight: 600;
+}
+
+/* Operators  =  =>  ==  !=  (Operator → o) */
+.language-lime .o,
+.language-mgx .o,
+.language-margarita .o,
+.language-margaritascript .o {
+    color: #ef7822;
+}
+
+/* Punctuation  ( ) [ ] { } : ,  (Punctuation → p) */
+.language-lime .p,
+.language-mgx .p,
+.language-margarita .p,
+.language-margaritascript .p {
+    color: var(--md-default-fg-color, #abb2bf);
+}
+
+/* Strings  (String → s / s1 / s2) */
+.language-lime .s,
+.language-lime .s1,
+.language-lime .s2,
+.language-mgx .s,
+.language-mgx .s1,
+.language-mgx .s2,
+.language-margarita .s,
+.language-margarita .s1,
+.language-margarita .s2,
+.language-margaritascript .s,
+.language-margaritascript .s1,
+.language-margaritascript .s2 {
+    color: var(--md-code-hl-string-color, #98c379);
+}
+
+/* Numbers  (Number.Integer → mi, Number.Float → mf) */
+.language-lime .mi,
+.language-lime .mf,
+.language-mgx .mi,
+.language-mgx .mf,
+.language-margarita .mi,
+.language-margarita .mf,
+.language-margaritascript .mi,
+.language-margaritascript .mf {
+    color: var(--md-code-hl-number-color, #d19a66);
+}
+
+/* Comments  (Comment.Single → c1) */
+.language-lime .c,
+.language-lime .c1,
+.language-mgx .c,
+.language-mgx .c1,
+.language-margarita .c,
+.language-margarita .c1,
+.language-margaritascript .c,
+.language-margaritascript .c1 {
+    color: var(--md-code-hl-comment-color, #5c6370);
+    font-style: italic;
+}
