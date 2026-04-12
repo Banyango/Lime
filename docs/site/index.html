@@ -997,68 +997,68 @@
 <li>Add only the tools you need for a query. Nuke them, then add others and repeat. This keeps context size small and relevant.</li>
 </ul>
 <h1 id="example">Example<a class="headerlink" href="#example" title="Permanent link">&para;</a></h1>
-<div class="language-text highlight"><pre><span></span><code>// file:example.mgx
+<div class="language-lime highlight"><pre><span></span><code><span class="c1">// file:example.mgx</span>
 ---
 description: Add metadata
 team: Can put anything in metadata
 ---
 
-// Import python functions for use with @effect func
-from math import add, subtract, multiply, load_files
+<span class="c1">// Import python functions for use with @effect func</span>
+<span class="k">from</span><span class="w"> </span><span class="nn">math</span><span class="w"> </span><span class="k">import</span><span class="w"> </span><span class="nf">add</span>, subtract, multiply, load_files
 
-// Supports all markdown. Places this into the agent&#39;s context.
-&lt;&lt;
-You are an expert mathematician.
-Your task is to solve addition problems accurately and efficiently.
+<span class="c1">// Supports all markdown. Places this into the agent&#39;s context.</span>
+<span class="dl">&lt;&lt;</span>
+<span class="go">You are an expert mathematician.</span>
+<span class="go">Your task is to solve addition problems accurately and efficiently.</span>
 
-When given a problem, you should:
-1. Read the problem carefully.
-2. Identify the two numbers to be added.
-3. Calculate the sum of the two numbers.
-4. Provide the final answer clearly.
-&gt;&gt;
+<span class="go">When given a problem, you should:</span>
+<span class="go">1. Read the problem carefully.</span>
+<span class="go">2. Identify the two numbers to be added.</span>
+<span class="go">3. Calculate the sum of the two numbers.</span>
+<span class="go">4. Provide the final answer clearly.</span>
+<span class="dl">&gt;&gt;</span>
 
-// Include other margarita files into the context
+<span class="c1">// Include other margarita files into the context</span>
 [[ create-a-react-component.mg ]]
 
-// Execute a loop 
-for i in items:
-    // run Python functions and store results in state.
-    @effect func add(12, test.data) =&gt; result
+<span class="c1">// Execute a loop </span>
+<span class="k">for</span><span class="w"> </span><span class="nv">i</span><span class="w"> </span><span class="k k-Operator">in</span><span class="w"> </span><span class="nv">items</span><span class="p">:</span>
+    <span class="c1">// run Python functions and store results in state.</span>
+    <span class="kd">@effect</span><span class="w"> </span><span class="k">func</span><span class="w"> </span><span class="nf">add</span><span class="p">(</span>12<span class="p">,</span><span class="w"> </span><span class="nv">test</span>.<span class="nv">data</span><span class="p">)</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="nv">result</span>
 
-// The agent can access/ set state variables too!
-&lt;&lt;
-Add 12 + test.data and store the result in the variable &#39;result&#39;.
-&gt;&gt;
+<span class="c1">// The agent can access or set state variables too!</span>
+<span class="dl">&lt;&lt;</span>
+<span class="go">Add 12 + test.data and store the result in the variable &#39;result&#39;.</span>
+<span class="dl">&gt;&gt;</span>
 
-// Add tools, note: AddToolParam extends BaseModel from pydantic
-@effect tools add(params: AddToolParams) =&gt; int
+<span class="c1">// Add tools, note: AddToolParam extends BaseModel from pydantic</span>
+<span class="kd">@effect</span><span class="w"> </span><span class="k">tools</span><span class="w"> </span><span class="nf">add</span><span class="p">(</span><span class="nv">params</span><span class="p">: </span><span class="nb">AddToolParams</span><span class="p">)</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="nv">int</span>
 
-// Run the agent using tools and the context you built up.
-@effect run
+<span class="c1">// Run the agent using tools and the context you built up.</span>
+<span class="kd">@effect</span><span class="w"> </span><span class="k">run</span>
 
-// clear the context and tools after running to avoid context explosion in future runs.
-@effect context clear
-@effect tools clear
+<span class="c1">// clear the context and tools after running to avoid context explosion in future runs.</span>
+<span class="kd">@effect</span><span class="w"> </span><span class="k">context</span><span class="w"> </span><span class="k">clear</span>
+<span class="kd">@effect</span><span class="w"> </span><span class="k">tools</span><span class="w"> </span><span class="nf">clear</span>
 
-// use the state result variables with a new context.
-&lt;&lt;
-Validate the following:
-- The addition tool correctly adds two numbers.
-- The subtraction tool correctly subtracts two numbers.
-- The multiplication tool correctly multiplies two numbers.
-- The load_files function correctly loads and reads files from the specified directory.
-&gt;&gt;
+<span class="c1">// use the state result variables with a new context.</span>
+<span class="dl">&lt;&lt;</span>
+<span class="go">Validate the following:</span>
+<span class="go">- The addition tool correctly adds two numbers.</span>
+<span class="go">- The subtraction tool correctly subtracts two numbers.</span>
+<span class="go">- The multiplication tool correctly multiplies two numbers.</span>
+<span class="go">- The load_files function correctly loads and reads files from the specified directory.</span>
+<span class="dl">&gt;&gt;</span>
 
-// conditonal logic
-if result.failed:
-    &lt;&lt;
-    The test failed. Please review the implementation of the math tools and the
-    load_files function for any errors.
-    &gt;&gt;
-    @effect run
-else:
-    // We&#39;re done!
+<span class="c1">// conditonal logic</span>
+<span class="k">if</span><span class="w"> </span><span class="nv">result.failed</span><span class="p">:</span>
+    <span class="dl">&lt;&lt;</span>
+<span class="go">    The test failed. Please review the implementation of the math tools and the</span>
+<span class="go">    load_files function for any errors.</span>
+<span class="go">    </span><span class="dl">&gt;&gt;</span>
+    <span class="kd">@effect</span><span class="w"> </span><span class="k">run</span>
+<span class="k">else</span><span class="p">:</span>
+    <span class="c1">// We&#39;re done!</span>
 </code></pre></div>
 <p>Hopefully this gives you a taste of the possibilities with Lime!</p>
 
